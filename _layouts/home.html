@@ -1,0 +1,183 @@
+---
+layout: archive
+---
+
+{{ content }}
+
+<style type="text/css">
+	*{
+		margin: 0;
+		margin-top:0.5em;
+		padding: 0;
+	}
+	.item{
+		height: 1.25em;
+	}
+	.headname{
+		font-size: medium;
+		float: left;
+	}
+
+	.descrip{
+		font-size: medium;
+	}
+	.time{
+		font-size: medium;
+		font-style: italic;
+                float: right;
+	}
+	.body{
+		font-size: medium;
+	}
+</style>
+
+<h2>Curriculum Vitae</h2>
+
+
+<h3 class="archive__cvsubtitle">Education</h3>
+<div class="item">
+    <div class="headname"><b>Jilin University</b></div>
+    <div class="time">Sep. 2015 – Jul. 2019</div>
+</div>
+<div class="descrip">Bachelor of Engineering</div>
+
+
+
+<h3 class="archive__cvsubtitle">Experiences</h3>
+<div class="item">
+    <div class="headname">
+        <b>Center for Speech and Language Technologies, Tsinghua University</b>
+    </div>
+    <div class="time">Sep. 2019 - Oct. 2020</div>
+</div>
+<div class="descrip">Research Assistant</div>
+
+<div class="item">
+    <div class="headname">
+        <b>Key Laboratory of Geophysical Exploration Equipment, Ministry of Education</b>
+    </div>
+    <div class="time">Nov. 2017 – Nov. 2018</div>
+</div>
+<div class="descrip">Intern student</div>
+
+
+
+<h3 class="archive__cvsubtitle">Publications</h3>
+<ul>
+    <li> <div class="body">
+        Lantian Li, Yang Zhang, <b>Jiawen Kang</b>, Thomas Fang Zheng, Dong Wang.
+        <br>
+            <b>"SQUEEZING VALUE OF CROSS-DOMAIN LABELS: A DECOUPLED SCORING APPROACH FOR SPEAKER VERIFICATION"</b>
+        </br>
+        submitted to <i>ICASSP 2021</i>
+    </div></li>
+
+    <li> <div class="body">
+        Lantian Li, Dong Wang, <b>Jiawen Kang</b>, Renyu Wang, Jing Wu et al.
+        <br>
+            <b>"A Principle Solution for Enroll-Test Mismatch in Speaker Recognition"</b>
+        </br>
+        submitted to <i>Transactions on Audio, Speech and Language Processing</i>
+    </div></li>
+
+    <li> <div class="body">
+        <b>Jiawen Kang</b>, Ruiqi Liu, Lantian Li, Yunqi Cai, Dong Wang, Thomas Fang Zheng
+        <br>
+            <b>"Domain-Invariant Speaker Vector Projection by Model-Agnostic Meta-Learning"</b>
+        </br>
+        <i>INTERSPEECH 2020</i>
+    </div></li>
+
+    <li> <div class="body">
+        Yue Fan, <b>Jiawen Kang</b>, Lantian Li, Kaicheng Li, Haolin Chen et al.
+        <br>
+            <b>"CN-CELEB: A CHALLENGING CHINESE SPEAKER RECOGNITION DATASET"</b>
+        </br>
+        <i>ICASSP 2020</i>
+    </div></li>
+
+    <li> <div class="body">
+        Tianyu Zhang, <b>Jiawen Kang</b>, Dezhuang Meng, Hongwei Wang et al.
+        <br>
+            <b>"Mathematical Methods and Algorithms for Improving Near-Infrared Tunable Diode-Laser Absorption Spectroscopy"</b>
+        </br>
+        <i>Sensors 2018, 18(12), 4295; https://doi.org/10.3390/s18124295</i>
+    </div></li>
+</ul>
+
+
+
+<h3 class="archive__cvsubtitle">Presentations & Reports</h3>
+<ul>
+    <li> <div class="body">
+    Presenter, "Domain-Invariant Speaker Vector Projection by Model-Agnostic Meta-Learning", INTERSPEECH 2020.
+    </div></li>
+
+    <li> <div class="body">
+    Poster, "CN-CELEB: A CHALLENGING CHINESE SPEAKER RECOGNITION DATASET", ICASSP 2020.
+    </div></li>
+
+    <li> <div class="body">
+    Technical Report, "Extension work of CN-CELEB", please see <a href="xxx">PDF</a>.
+</ul>
+
+
+
+<h3 class="archive__cvsubtitle">Open Source</h3>
+<ul>
+    <li> <div class="body">
+    <b>Open source dataset: CN-Celeb</b>.
+    <br>
+    This is a large-scale speaker recognition (SRE) dataset, including CN-Celeb1 and CN-Celeb2. It is the first multi-condition SRE dataset that covers 11 speech genre. More detail please see <a href="https://openslr.org/82/">Data link</a>.
+    </br>
+    </div></li>
+
+    <li> <div class="body">
+    <b>Kaldi speaker recognition recipe.</b>
+    <br>
+    This is a CN-Celeb standard SRE recipe, has been merged into offical Kaldi egs. Please refer <a href="https://github.com/kaldi-asr/kaldi/tree/master/egs/cnceleb">Kaldi egs</a>.
+    </br>
+    </div></li>
+</ul>
+
+
+
+<h3 class="archive__cvsubtitle">Projects</h3>
+<ul>
+    <li><div class="body">
+        <b>CN-Celeb: A Challenging Chinese Speaker Recognintion Dataset</b>
+        <br>Data link: <a href="https://openslr.org/82/">https://openslr.org/82/</a></br> 
+        <i>CSLT, TSinghua University</i>
+    </li>
+
+    <li><div class="body">
+        <b>End-to-End Chinese Speech Synthesis System</b>
+        <br>Synthesised speech sample: <a href="https://kjw11.github.io/AudioSamplesPage">Sample page</a></br>
+        <i>Individual Final Year Project, supported by MaiboZhicheng Technology Co., Ltd</i>
+    </li>
+
+    <li><div class="body">
+        <b>Spectral Absorption Optical Fiber Methane Monitoring System</b>
+        <br><i>National College Students Innovation and Entrepreneurship Training</i></br>
+    </li>
+
+    <li><div class="body">
+        <b>High-speed Time-interleaved Sample System based on FPGA</b>
+        <br><i>Summer Research Training</i></br>
+    </li>
+
+
+{% if paginator %}
+  {% assign posts = paginator.posts %}
+{% else %}
+  {% assign posts = site.posts %}
+{% endif %}
+
+{% assign entries_layout = page.entries_layout | default: 'list' %}
+<div class="entries-{{ entries_layout }}">
+  {% for post in posts %}
+    {% include archive-single.html type=entries_layout %}
+  {% endfor %}
+</div>
+
+{% include paginator.html %}

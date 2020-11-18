@@ -1,0 +1,6 @@
+# main links
+main:
+  #- title: "CV"
+  #  url:/index.html 
+  - title: "Researches"
+    url: /researches.md
