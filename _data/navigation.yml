@@ -3,5 +3,5 @@ main:
   - title: "CV"
     url: index.html
 
-  #- title: "Researches"
-  #  url: /researches/
+  - title: "Researches"
+    url: /researches/
