@@ -38,17 +38,15 @@ layout: archive
 <h3 class="archive__cvsubtitle">Education</h3>
 <div class="item">
     <div class="headname"><b>Jilin University</b></div>
+    <div class="time">Sep. 2015 – Jul. 2019</div>
 </div>
-<div class="body">
-<div class="descrip">Bachelor of Engineering</div><div class="time">Sep. 2015 – Jul. 2019</div>
-</div>
+    <div class="descrip">Bachelor of Engineering</div>
 
 
 <h3 class="archive__cvsubtitle">Experiences</h3>
 <div class="item">
     <div class="headname">
-        <b>Department of Systems Engineering and Engineering Management, 
-                                         The ChineseUniversity of Hong Kong</b>
+        <b>Department of SE&EM, The Chinese University of Hong Kong</b>
     </div>
     <div class="time">Nov. 2020 - Present</div>
 </div>
@@ -230,6 +228,7 @@ layout: archive
   <b>English</b>: Fluent<br>
   <b>Cantonese</b>：Beginner
 </div>
+
 {% if paginator %}
   {% assign posts = paginator.posts %}
 {% else %}
@@ -243,5 +242,7 @@ layout: archive
   {% endfor %}
 </div>
 
-
-Software{% include paginator.html %}
+<br>
+<br>
+See the <a href='assets/pdf/CV-KANG-Jiawen.pdf'>Full CV in PDF</a>
+{% include paginator.html %}
