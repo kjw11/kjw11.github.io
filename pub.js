@@ -73,8 +73,8 @@ var publications = [
        {
         url: 'https://arxiv.org/pdf/2012.12471.pdf',
         title: 'A principle solution for enroll-test mismatch in speaker recognition',
-        authers: ['Haibin Wu', 'Lingwei Meng', 'Jiawen Kang', 'Jinchao Li', 'Xu Li', 'Xixin Wu', 'Hung-yi Lee', 'Helen Meng'],
-        pub: 'TASLP',
+        authers: ['Lantian Li', 'Dong Wang', 'Jiawen Kang', 'Renyu Wang', 'Jing Wu', 'Zhendong Gao', 'Xiao Chen'],
+        pub: 'IEEE/ACM Transactions on Audio, Speech, and Language Processing',
         time: '2021'
        },
        {
@@ -121,9 +121,10 @@ var filter = function (year) {
 var outputHtml = function (publicationsArr) {
     var html = [];
     for (var i = 0; i < publicationsArr.length; i++) {
-        html.push('<ul class="pub_ul"><li><b><a href="' + publicationsArr[i].url + '" target="_blank">' + publicationsArr[i].title + '</a></b>');
+        html.push('<ul class="pub_ul"><li><a href="' + publicationsArr[i].url + '" target="_blank">' + publicationsArr[i].title + '</a>');
         html.push('<br>');
         var auther = [];
+        html.push('<p>');
         for (var j = 0; j < publicationsArr[i].authers.length; j++) {
             if (publicationsArr[i].authers[j] == 'Jiawen Kang') {
                 // auther.push('<b>Jiawen Kang</b>');
@@ -137,8 +138,11 @@ var outputHtml = function (publicationsArr) {
         }
         html.push(auther.join(', '));
         html.push('.</li>');
+        html.push('</p>');
         // html.push(publicationsArr[i].pub + publicationsArr[i].time);
+        html.push('<p>');
         html.push(publicationsArr[i].pub);
+        html.push('</p>');
         html.push('</ul>');
     }
     var container = document.getElementById('publications');
