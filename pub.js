@@ -11,7 +11,7 @@ var publications = [
         url: 'https://arxiv.org/pdf/2306.13307.pdf',
         title: 'Towards Effective and Compact Contextual Representation for Conformer Transducer Speech Recognition Systems',
         authers: ['Mingyu Cui', 'Jiawen Kang', 'Jiajun Deng', 'Xi Yin', 'Yutao Xie', 'Xie Chen', 'Xunying Liu'],
-        pub: 'INTERSPEECH 2023',
+        pub: 'INTERSPEECH 2023 (Oral)',
         time: '2023'
        },
        {
@@ -25,20 +25,20 @@ var publications = [
         url: 'https://www1.se.cuhk.edu.hk/~hccl/publications/pub/Lingwei%20Meng%20-%20Sidecar%20-%20update.pdf',
         title: 'A Sidecar Separator Can Convert A Single-Talker Speech Recognition System to A Multi-Talker One',
         authers: ['Lingwei Meng', 'Jiawen Kang', 'Mingyu Cui', 'Yuejiao Wang', 'Xixin Wu', 'Helen Meng'],
-        pub: 'ICASSP 2023',
+        pub: 'ICASSP 2023 (Oral)',
         time: '2023'
        },
        {
         url: 'https://arxiv.org/pdf/2305.12804.pdf',
         title: 'The defender\'s perspective on automatic speaker verification: An overview',
         authers: ['Haibin Wu', 'Jiawen Kang', 'Lingwei Meng', 'Helen Meng', 'Hung-yi Lee'],
-        pub: 'IJCAI DADA 2023',
+        pub: 'IJCAI DADA 2023 (Oral)',
         time: '2023'
        },
        {
         url: 'https://www.isca-speech.org/archive/pdfs/interspeech_2023/meng23d_interspeech.pdf',
         title: 'Integrated and enhanced pipeline system to support spoken language analytics for screening neurocognitive disorders',
-        authers: ['Helen Meng', 'Brian Mak', 'Man-Wai Mak', 'Helene Fung', 'Xianmin Gong', 'Timothy Kwok', 'Xunying Liu', 'Vincent Mok', 'Patrick Wong', 'Jean Woo', 'Xixin Wu', 'Ka Ho Wong', 'Sean Shensheng Xu', 'Naijun Zheng', 'Ranzo Huang', 'Jiawen Kang', 'Xiaoquan Ke', 'Junan Li', 'Jinchao Li', 'Yi Wang'],
+        authers: ['Helen Meng', 'Brian Mak', 'Man-Wai Mak', 'Helene Fung', 'Xianmin Gong', 'Timothy Kwok', 'Xunying Liu', 'Vincent Mok', 'Patrick Wong', 'Jean Woo', 'Xixin Wu', 'Ka Ho Wong', 'Sean Shensheng Xu', 'Naijun Zheng', 'Ranzo Huang', 'Jiawen Kang*', 'Xiaoquan Ke', 'Junan Li', 'Jinchao Li', 'Yi Wang'],
         pub: 'INTERSPEECH 2023',
         time: '2023'
        },
@@ -60,7 +60,7 @@ var publications = [
         url: 'https://arxiv.org/pdf/2202.08216.pdf',
         title: 'TalkTive: a conversational agent using backchannels to engage older adults in neurocognitive disorders screening',
         authers: ['Zijian Ding', 'Jiawen Kang', 'Tinky Oi Ting Ho', 'Ka Ho Wong', 'Helene H Fung', 'Helen Meng', 'Xiaojuan Ma'],
-        pub: 'CHI 2022',
+        pub: 'CHI 2022 (Oral)',
         time: '2022'
        },
        {
@@ -95,7 +95,7 @@ var publications = [
         url: 'https://arxiv.org/pdf/2005.11900.pdf',
         title: 'Domain-invariant speaker vector projection by model-agnostic meta-learning',
         authers: ['Jiawen Kang', 'Ruiqi Liu', 'Lantian Li', 'Yunqi Cai', 'Dong Wang', 'Thomas Fang Zheng'],
-        pub: 'INTERSPEECH 2020',
+        pub: 'INTERSPEECH 2020 (Oral)',
         time: '2020'
        },
        {
@@ -104,6 +104,13 @@ var publications = [
         authers: ['Yue Fan', 'Jiawen Kang', 'Lantian Li', 'KC Li', 'HL Chen', 'ST Cheng', 'PY Zhang', 'ZY Zhou', 'YQ Cai', 'Dong Wang'],
         pub: 'INTERSPEECH 2020',
         time: '2020'
+       },
+       {
+        url: 'https://www.mdpi.com/1424-8220/18/12/4295',
+        title: 'Mathematical Methods and Algorithms for Improving Near-Infrared Tunable Diode-Laser Absorption Spectroscopy',
+        authers: ['Tianyu Zhang', 'Jiawen Kang', 'Dezhuang Meng', 'Hongwei Wang' , 'Zhengming Mu' , 'Meng Zhou', 'Xiaotong Zhang','Chen Chen'],
+        pub: 'Sensors',
+        time: '2018'
        },
 
 
@@ -132,12 +139,17 @@ var outputHtml = function (publicationsArr) {
             } else if (publicationsArr[i].authers[j] == 'Jiawen Kang*') {
                // auther.push('<b>Jiawen Kang*</b>');
                auther.push('Jiawen Kang*');
+               var presenter = true
             } else {
                 auther.push(publicationsArr[i].authers[j]);
             }
         }
         html.push(auther.join(', '));
-        html.push('.</li>');
+        if (presenter == true){
+            html.push('. (*: presenter) </li>');
+        } else {
+            html.push('.</li>');
+        }
         html.push('</p>');
         // html.push(publicationsArr[i].pub + publicationsArr[i].time);
         html.push('<p>');
