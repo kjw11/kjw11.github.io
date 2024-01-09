@@ -189,7 +189,8 @@ var selYear = function () {
     initPub(year);
 };
 window.onload = function () {
-    var year = new Date().getFullYear();
+    // var year = new Date().getFullYear();
+    var year = 2023;
     initPub(year);  
 
 };
