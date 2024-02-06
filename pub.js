@@ -1,5 +1,13 @@
 
 var publications = [
+        {
+         url: 'https://arxiv.org/pdf/2401.04152.pdf',
+         title: 'Cross-Speaker Encoding Network for Multi-Talker Speech Recognition',
+         auther: ['Jiawen Kang', 'Lingwei Meng', 'Mingyu Cui', 'Haohan Guo', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
+         pub: 'ICASSP 2024',
+         time: '2024',
+         highlight: ''
+        },
        {
         url: 'https://arxiv.org/pdf/2309.00126.pdf',
         title: 'QS-TTS: Towards Semi-Supervised Text-to-Speech Synthesis via Vector-Quantized Self-Supervised Speech Representation Learning',
@@ -189,8 +197,8 @@ var selYear = function () {
     initPub(year);
 };
 window.onload = function () {
-    // var year = new Date().getFullYear();
-    var year = 2023;
+    var year = new Date().getFullYear();
+    // var year = 2023;
     initPub(year);  
 
 };
