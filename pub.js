@@ -224,14 +224,7 @@ var listPub = function (year, urlPart) {
     var container = document.getElementById('publications');
     container.innerHTML = ''; // clear
 
-    if (urlPart.endsWith('/index.html')) {
-
-        var publicationsArr = filter(year);
-        html = outputHtml(publicationsArr);
-        container.innerHTML += html.join('');
-
-
-    } else if (urlPart.endsWith('/paper_list.html')) {
+    if (urlPart.endsWith('/paper_list.html')) {
 
         // loop all years Now - 2018
         for (var i = year; i >= 2018; i--) {
@@ -243,6 +236,12 @@ var listPub = function (year, urlPart) {
             }
             container.innerHTML += html.join('');
         }
+    } else {
+
+        var publicationsArr = filter(year);
+        html = outputHtml(publicationsArr);
+        container.innerHTML += html.join('');
+        
     }
 };
 
