@@ -232,7 +232,7 @@ var listPub = function (year, urlPart) {
             var publicationsArr = filter(i);
             html = outputHtml(publicationsArr);
             if (html.length > 0) {
-                container.innerHTML += '<h2>' + i + '</h2>';
+                container.innerHTML += '<h3>' + i + '</h3>';
             }
             container.innerHTML += html.join('');
         }

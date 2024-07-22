@@ -104,6 +104,12 @@ body {
   line-height: 150%;
 }
 
+.papers h3 {
+  margin-top: 3em;
+  line-height: 150%;
+  color: #991D2E;
+}
+
 /* cv */
 .cv {
   margin: 0 auto;
@@ -111,7 +117,7 @@ body {
   margin-top: 40px;
 }
 
-.cv h2 {
+.cv h3 {
   margin-top: 3em;
   color: #991D2E;
 }
