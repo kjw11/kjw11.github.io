@@ -1,6 +1,38 @@
 
 var publications = [
     {
+        url: 'https://arxiv.org/pdf/2409.08596.pdf',
+        title: 'Towards Within-Class Variation in Alzheimer\'s Disease Detection from Spontaneous Speech',
+        authors: ['Jiawen Kang', 'Dongrui Han', 'Lingwei Meng', 'Jingyan Zhou', 'Jinchao Li', 'Xixin Wu', 'Helen Meng'],
+        pub: 'Preprint',
+        time: '2024',
+        highlight: ''
+    },
+    {
+        url: 'https://arxiv.org/pdf/2409.08596.pdf',
+        title: 'Disentangling Speakers in Multi-Talker Speech Recognition with Speaker-Aware CTC',
+        authors: ['Jiawen Kang', 'Lingwei Meng', 'Mingyu Cui', 'Yuejiao Wang', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
+        pub: 'Preprint',
+        time: '2024',
+        highlight: ''
+    },
+    {
+        url: 'https://arxiv.org/pdf/2409.08596.pdf',
+        title: 'Large Language Model Can Transcribe Speech in Multi-Talker Scenarios with Versatile Instructions',
+        authors: ['Lingwei Meng', 'Shujie Hu', 'Jiawen Kang', 'Zhaoqing Li', 'Yuejiao Wang', 'Wenxuan Wu', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
+        pub: 'Preprint',
+        time: '2024',
+        highlight: ''
+    },
+    {
+        url: 'https://arxiv.org/pdf/2409.08797.pdf',
+        title: 'Exploring SSL Discrete Speech Features for Zipformer-based Contextual ASR',
+        authors: ['Mingyu Cui', 'Yifan Yang', 'Jiajun Deng', 'Jiawen Kang', 'Shujie Hu', 'Tianzi Wang', 'Zhaoqing Li', 'Shiliang Zhang', 'Xie Chen', 'Xunying Liu'],
+        pub: 'Preprint',
+        time: '2024',
+        highlight: ''
+    },
+    {
         url: 'https://arxiv.org/pdf/2407.09817.pdf',
         title: 'Empowering whisper as a joint multi-talker and target-talker speech recognition system',
         authors: ['Lingwei', 'Jiawen Kang', 'Yuejiao Wang', 'Zengrui Jin', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
@@ -12,7 +44,7 @@ var publications = [
         url: 'https://arxiv.org/pdf/2407.01850.pdf',
         title: 'Purple-teaming LLMs with Adversarial Defender Training',
         authors: ['Jingyan Zhou', 'Kun Li', 'Junan Li', 'Jiawen Kang', 'Minda Hu', 'Xixin Wu', 'Helen Meng'],
-        pub: 'Submitted to TACL',
+        pub: 'Preprint',
         time: '2024',
         highlight: ''
     },
