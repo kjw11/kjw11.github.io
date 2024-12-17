@@ -17,6 +17,14 @@ var publications = [
         highlight: ''
     },
     {
+        url: 'https://arxiv.org/pdf/2412.06332.pdf',
+        title: 'Not All Errors Are Equal: Investigation of Speech Recognition Errors in Alzheimer’s Disease Detection',
+        authors: ['Jiawen Kang', 'Junan Li', 'Jinchao Li', 'Xixin Wu', 'Helen Meng'],
+        pub: 'IEEE ISCSLP 2024',
+        time: '2024',
+        highlight: ''
+    },
+    {
         url: 'https://arxiv.org/pdf/2409.08596.pdf',
         title: 'Large Language Model Can Transcribe Speech in Multi-Talker Scenarios with Versatile Instructions',
         authors: ['Lingwei Meng', 'Shujie Hu', 'Jiawen Kang', 'Zhaoqing Li', 'Yuejiao Wang', 'Wenxuan Wu', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
@@ -252,36 +260,56 @@ var outputHtml = function (publicationsArr) {
 };
 
 
-var listPub = function (year, urlPart) {
+var listPub = function (year, urlPart, format) {
     var container = document.getElementById('publications');
     container.innerHTML = ''; // clear
 
-    if (urlPart.endsWith('/paper_list.html')) {
 
-        // loop all years Now - 2018
-        for (var i = year; i >= 2018; i--) {
-            
-            var publicationsArr = filter(i);
-            html = outputHtml(publicationsArr);
-            if (html.length > 0) {
-                container.innerHTML += '<h3>' + i + '</h3>';
-            }
-            container.innerHTML += html.join('');
-        }
-    } else {
+    // var publicationsArr = filter(year);
+    // html = outputHtml(publicationsArr);
+    // container.innerHTML += html.join('');
 
-        var publicationsArr = filter(year);
-        html = outputHtml(publicationsArr);
-        container.innerHTML += html.join('');
+
+    // inset html "<p style="color: #991D2E; font-weight: bold;"> <em>recent papers</em></p>"
+    container.innerHTML += '<br><br> <p style="color: #991D2E; font-weight: bold;"> <em> list of all papers </em></p>';
+
+    // loop all years Now - 2018
+    for (var i = year; i >= 2018; i--) {
         
+        var publicationsArr = filter(i);
+        html = outputHtml(publicationsArr);
+        if (html.length > 0) {
+            container.innerHTML += '<h4>' + i + '</h4>';
+        }
+        container.innerHTML += html.join('');
     }
+
+    // if (urlPart.endsWith('/papers.html')) {
+
+    //     // loop all years Now - 2018
+    //     for (var i = year; i >= 2018; i--) {
+            
+    //         var publicationsArr = filter(i);
+    //         html = outputHtml(publicationsArr);
+    //         if (html.length > 0) {
+    //             container.innerHTML += '<h3>' + i + '</h3>';
+    //         }
+    //         container.innerHTML += html.join('');
+    //     }
+    // } else {
+
+    //     var publicationsArr = filter(year);
+    //     html = outputHtml(publicationsArr);
+    //     container.innerHTML += html.join('');
+        
+    // }
 };
 
 var selYear = function () {
     var selector = document.getElementById('select-year');
     var year = selector.value;
     var urlPart = window.location.pathname;
-    listPub(year, urlPart);
+    listPub(year, urlPart)
 };
 
 window.onload = function () {

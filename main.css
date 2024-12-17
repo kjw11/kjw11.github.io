@@ -29,6 +29,10 @@
   }
 }
 
+.kaiti{
+  font-family: "KaiTi", serif;
+}
+
 body {
   font-family: serif;
 }
@@ -86,7 +90,7 @@ body {
 }
 
 .papers ul {
-  margin-top: 0em;
+  margin-top: -0.5em;
   margin-left: -2.5em;
 }
 
@@ -108,6 +112,7 @@ body {
   margin-top: 3em;
   line-height: 150%;
   color: #991D2E;
+  font-style: italic;
 }
 
 /* cv */
@@ -120,6 +125,7 @@ body {
 .cv h3 {
   margin-top: 3em;
   color: #991D2E;
+  font-style: italic;
 }
 
 .cv ul {
