@@ -1,7 +1,15 @@
 
 var publications = [
     {
-        url: 'https://arxiv.org/pdf/2409.08596.pdf',
+        url: 'https://www.arxiv.org/abs/2501.03727.pdf',
+        title: 'Detecting Neurocognitive Disorders through Analyses of Topic Evolution and Cross-modal Consistency in Visual-Stimulated Narratives',
+        authors: ['Jinchao Li', 'Yuejiao Wang', 'Junan Li', 'Jiawen Kang', 'Bo Zheng', 'Simon Wong', 'Brian Mak', 'Helene Fung', 'Jean Woo', 'Man-Wai Mak', 'Timothy Kwok', 'Vincent Mok', 'Xianmin Gong', 'Xixin Wu', 'Xunying Liu', 'Patrick Wong', 'Helen Meng'],
+        pub: 'Preprint',
+        time: '2025',
+        highlight: ''
+    },
+    {
+        url: 'https://arxiv.org/pdf/2409.16322.pdf',
         title: 'Towards Within-Class Variation in Alzheimer\'s Disease Detection from Spontaneous Speech',
         authors: ['Jiawen Kang', 'Dongrui Han', 'Lingwei Meng', 'Jingyan Zhou', 'Jinchao Li', 'Xixin Wu', 'Helen Meng'],
         pub: 'Preprint',
@@ -9,7 +17,7 @@ var publications = [
         highlight: ''
     },
     {
-        url: 'https://arxiv.org/pdf/2409.08596.pdf',
+        url: 'https://arxiv.org/pdf/2409.12388.pdf',
         title: 'Disentangling Speakers in Multi-Talker Speech Recognition with Speaker-Aware CTC',
         authors: ['Jiawen Kang', 'Lingwei Meng', 'Mingyu Cui', 'Yuejiao Wang', 'Xixin Wu', 'Xunying Liu', 'Helen Meng'],
         pub: 'Preprint',
