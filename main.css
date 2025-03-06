@@ -1,0 +1,182 @@
+
+@media only screen and (max-width: 400px) {
+  #container {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  #nav {
+    width: 100%;
+  }
+
+  .profile img {
+    width: 100px;
+  }
+
+  .cv ul {
+    display: block;
+  }
+}
+
+@media only screen and (min-width: 500px) {
+  #container {
+    width: 700px;
+    margin: 0 auto;
+  }
+
+  #nav {
+    width: 600px;
+  }
+}
+
+.kaiti{
+  font-family: "KaiTi", serif;
+}
+
+body {
+  font-family: serif;
+}
+
+/* Nav. */
+#nav {
+  height: 1em;
+  padding: 0 0 1em 0;
+  margin: 1em 0;
+}
+
+#nav li {
+  padding: 0 2em 0 0;
+  list-style-type: none;
+  float: left;
+}
+
+#nav li a {
+  font-weight: bold;
+  color: #991D2E;
+  text-decoration: none;
+}
+
+#nav li a:hover {
+  color: #C10043;
+}
+
+/* Profile */
+.profile {
+  display: flex;
+  align-items: center; 
+  justify-content: flex-start; 
+  text-align: right; 
+}
+
+.profile img {
+  margin-right: auto;
+  width: 170px;
+}
+
+.profile p {
+  font-size: 0.75em;
+  font-weight: normal;
+  line-height: 120%;
+}
+
+.padding {
+  margin: 1em 0;
+}
+
+/* Papers */
+.papers li {
+  line-height: 300%;
+  text-indent: 0em;
+}
+
+.papers ul {
+  margin-top: -0.5em;
+  margin-left: -2.5em;
+}
+
+.papers a {
+  color: #1d2e99;
+}
+
+.papers a:hover {
+  text-decoration: underline;
+  color: #C10043;
+}
+
+.papers p {
+  margin: 0;
+  line-height: 150%;
+}
+
+.papers h3 {
+  margin-top: 3em;
+  line-height: 150%;
+  color: #991D2E;
+  font-style: italic;
+}
+
+/* cv */
+.cv {
+  margin: 0 auto;
+  margin-bottom: 0px;
+  margin-top: 40px;
+}
+
+.cv h3 {
+  margin-top: 3em;
+  color: #991D2E;
+  font-style: italic;
+}
+
+.cv ul {
+  display: flex;
+  padding-left: 0;
+  margin-top: -1em;
+  margin-bottom: -1em;
+}
+
+#p_l {
+  white-space: nowrap;
+  /* padding-right: 1em; */
+  width: 12em;
+}
+#p_r {
+  text-align: left;
+  width: 40em;
+}
+
+/* Others */
+.clear {
+  clear: both;
+}
+
+h1 {
+  font-size: 150%;
+}
+
+h2 {
+  font-size: 120%;
+}
+
+h3 {
+  font-size: 100%;
+}
+
+p {
+  line-height: 1.5em;
+}
+
+a {
+  color: #1d2e99;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #C10043;
+}
+
+#date {
+  font-size: 0.75em;
+  color: #a0a0a0;
+  text-align: right;
+}
