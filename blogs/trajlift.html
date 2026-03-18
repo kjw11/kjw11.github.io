@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seeding Word Embeddings with Heat Diffusion · TrajLift</title>
+<meta name="description" content="An interactive walkthrough of TrajLift (NeurIPS 2026): a semantic graph, heat diffusion for semantic similarity, and diffusion-time modulation for position and dynamics.">
+<script>
+(function(){var l="en";try{var s=localStorage.getItem("trajlift-lang");if(s==="zh"||s==="en")l=s;}catch(e){}
+if(location.hash==="#zh")l="zh";else if(location.hash==="#en")l="en";
+document.documentElement.setAttribute("data-lang",l);document.documentElement.lang=l==="zh"?"zh-CN":"en";})();
+window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]],displayMath:[["$$","$$"],["\\[","\\]"]]},svg:{fontCache:"global"},
+  startup:{typeset:false,ready(){MathJax.startup.defaultReady();MathJax.startup.promise.then(()=>{window.__tlTypeset&&window.__tlTypeset();});}},
+  options:{skipHtmlTags:["script","noscript","style","textarea","svg"]}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=STIX+Two+Text:ital@0;1&family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@400;600&display=swap">
+<style>
+/* Layout: minimal single-column blog post aligned with the 700px homepage column. Single figures at ~70% of text width, paired figures span the column. EN/中文 toggle in the top bar. */
+:root{
+  --bg:#ffffff; --tint:#f6f6f6; --ink:#222222; --ink2:#333333; --muted:#6e6e6e;
+  --line:#e6e6e6; --line2:#cccccc; --link:#00A86B;
+  --h0:#efeceb; --h1:#f0996a; --h2:#a3221a;
+  --cool:#2f6db5;
+  --s1:#2a78d6; --s2:#1baf7a; --s3:#eda100;
+  --accent:#b8321f; --accent-soft:#f8e6e1;
+  --f-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;
+  --f-fig:"Source Sans 3","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --f-var:"STIX Two Text","Times New Roman",serif;
+  --f-cjk-serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1a1a1a; --tint:#222222; --ink:#eeeeee; --ink2:#dddddd; --muted:#9a9a9a;
+  --line:#2f2f2f; --line2:#454545; --link:#3BD39B;
+  --h0:#2a2a2a; --h1:#9c4429; --h2:#ff8d5e; --cool:#6ea8ef;
+  --s1:#3987e5; --s2:#199e70; --s3:#c98500;
+  --accent:#ff7a52; --accent-soft:#3a2420; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#1a1a1a; --tint:#222222; --ink:#eeeeee; --ink2:#dddddd; --muted:#9a9a9a;
+  --line:#2f2f2f; --line2:#454545; --link:#3BD39B;
+  --h0:#2a2a2a; --h1:#9c4429; --h2:#ff8d5e; --cool:#6ea8ef;
+  --s1:#3987e5; --s2:#199e70; --s3:#c98500;
+  --accent:#ff7a52; --accent-soft:#3a2420; color-scheme:dark;
+}
+html:not([data-lang="zh"]) .zh{display:none!important}
+html[data-lang="zh"] figcaption{font-family:var(--f-cjk-serif);font-size:.9rem}
+html[data-lang="zh"] figcaption .num{font-family:inherit}
+html[data-lang="zh"] .en{display:none!important}
+*{box-sizing:border-box}
+html{overflow-y:scroll}
+body{background:var(--bg);color:var(--ink2);font-family:var(--f-body);margin:8px}
+.post{max-width:700px;margin:0 auto;padding-inline:0;padding-block:.5rem 5rem;font-size:1.08rem;line-height:1.75}
+html[data-lang="zh"] .post{line-height:1.9}
+a{color:var(--link);text-decoration:none}
+a:hover{color:#111827;background:#FFC819;text-decoration:none}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:3rem;font-size:.9rem;line-height:normal;color:var(--muted)}
+.site-nav{display:flex;gap:2em;align-items:center;font-size:1rem}
+.site-nav a{font-weight:700}
+.lang{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.lang button{border:0;border-radius:0;padding:2px 10px;background:var(--bg);color:var(--muted);font-size:.8rem}
+.lang button+button{border-left:1px solid var(--line2)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.post-title{font-size:2.1rem;font-weight:700;line-height:1.3;color:var(--ink);margin:0 0 .4rem;text-wrap:balance;text-align:left}
+.byline{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.95rem;margin:0}
+.paper-note{background:var(--tint);border-radius:8px;padding:14px 18px;margin:1rem 0 2.2rem;font-size:.98rem;line-height:1.7;color:var(--ink2)}
+.paper-note p{margin:0}
+.paper-note em{color:var(--ink)}
+h2{font-size:1.55rem;font-weight:700;color:var(--ink);margin:2.6rem 0 .8rem;line-height:1.35;text-wrap:balance;text-align:left}
+p{margin:0 0 1.1rem}
+ol.toc{margin:0 0 1.1rem;padding-left:1.4em}
+mjx-container[display="true"]{margin:1rem 0!important;overflow-x:auto;overflow-y:hidden}
+.num{font-family:var(--f-fig);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mv{font-family:var(--f-var);font-style:italic;font-weight:400;font-size:1.08em}
+
+/* figures */
+figure{margin:1.6rem 0}
+figure.single{width:70%;margin-inline:auto}
+figure.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.panel{min-width:0;display:grid;gap:6px;align-content:start}
+figure>svg,.panel>svg{display:block;width:100%;height:auto;overflow:visible}
+mjx-container svg{display:inline-block}
+figcaption,.cap{font-size:.88rem;line-height:1.6;color:var(--muted)}
+figcaption b,.cap b{color:var(--ink2);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:.84rem;color:var(--muted);font-family:var(--f-fig)}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:.9rem;padding-block:8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:1.4rem 0}
+.ctrl.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg)}
+.ctrl label{display:flex;gap:10px;align-items:center;flex:1 1 240px;min-width:0;color:var(--ink2)}
+.ctrl input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.ctrl .read{font-family:var(--f-fig);font-size:.92rem;min-width:6.5em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.ctrl .note{font-size:.8rem;color:var(--muted)}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-size:.85rem;line-height:1.5;border:1px solid var(--line2);background:var(--bg);color:var(--ink);border-radius:5px;padding:2px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,.chip:focus-visible,a:focus-visible,.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:0;margin-right:4px}
+
+.seq{display:flex;flex-wrap:wrap;align-items:center;gap:3px;row-gap:8px;justify-content:center;margin-bottom:6px}
+.chip{border:1px solid var(--line2);background:var(--bg);border-radius:6px;padding:2px 8px 1px;cursor:pointer;display:grid;justify-items:center;line-height:1.3;font:inherit;font-family:var(--f-fig);font-size:.88rem;color:var(--ink)}
+.chip small{font-family:var(--f-fig);font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.gap{font-family:var(--f-fig);font-variant-numeric:tabular-nums;font-size:.74rem;color:var(--muted);display:grid;justify-items:center;line-height:1.1;padding-inline:1px}
+.gap .bar{height:3px;background:var(--h1);border-radius:2px;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;font-size:.84rem;font-family:var(--f-fig)}
+.stat{border-top:1px solid var(--line);padding-top:4px}
+.stat .k{color:var(--muted)}
+.stat .v{font-family:var(--f-fig);font-size:1rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+.notes{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted);line-height:1.6}
+.notes p{margin:0 0 .6rem}
+.post-footer{margin-top:3rem;font-size:.75em;color:var(--muted);text-align:right}
+
+/* svg text */
+.tk{fill:var(--muted);font-family:var(--f-fig);font-size:11.5px;font-variant-numeric:tabular-nums}
+.tkb{fill:var(--ink2);font-family:var(--f-fig);font-size:12.5px}
+.halo{paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
+.val{fill:var(--ink);font-family:var(--f-fig);font-size:11.5px;font-variant-numeric:tabular-nums}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{stroke:var(--line2);stroke-width:1}
+.bandl{stroke:var(--line2);stroke-width:1;stroke-dasharray:3 3}
+.dom-rect{fill:none;stroke:var(--line2);stroke-dasharray:2 4}
+.cat-rect{fill:var(--tint);stroke:var(--line)}
+.dom-lbl{fill:var(--muted);font-family:var(--f-fig);font-size:12px;letter-spacing:.1em}
+.cat-lbl{fill:var(--ink2);font-family:var(--f-fig);font-size:13.5px;font-weight:600}
+.node{cursor:pointer}
+.nlab{fill:var(--ink2);font-family:var(--f-fig);font-size:14px;pointer-events:none;paint-order:stroke;stroke:var(--tint);stroke-width:3px;stroke-linejoin:round}
+.nlab.on{fill:var(--accent);font-weight:700}
+
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.5;padding:6px 9px;border-radius:5px;max-width:260px;font-family:var(--f-fig)}
+#tip .mono{font-variant-numeric:tabular-nums}
+
+@media (max-width:640px){
+  .post{padding-inline:0;padding-block:.5rem 3rem}
+  .post-title{font-size:1.6rem}
+  figure.single{width:100%}
+  figure.pair{grid-template-columns:minmax(0,1fr);gap:22px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+<style>[hidden]{display:none!important}</style>
+</head>
+<body>
+<article class="post">
+<div class="topbar">
+  <nav class="site-nav" aria-label="Primary navigation">
+    <a href="../index.html"><em>About/</em></a>
+    <a href="index.html"><u><em>Posts/</em></u></a>
+  </nav>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" id="lang-en" data-l="en">English</button>
+    <button type="button" id="lang-zh" data-l="zh">中文</button>
+  </div>
+</div>
+
+<h1 class="post-title"><span class="en">Seeding Word Embeddings with Heat Diffusion</span><span class="zh">用热扩散初始化词嵌入</span></h1>
+<p class="byline"><span>Jiawen Kang · <span class="en">October 2026</span><span class="zh">2026 年 10 月</span></span><a href="index.html">Back</a></p>
+<div class="paper-note">
+  <p class="en">This post introduces our NeurIPS 2026 paper, <em>TrajLift: Encoding Verbal Memory Dynamics via Heat Diffusion on Semantic Hierarchies</em>. The preprint and code will be released soon.</p>
+  <p class="zh">本文介绍我们被 NeurIPS 2026 接收的论文 <em>TrajLift: Encoding Verbal Memory Dynamics via Heat Diffusion on Semantic Hierarchies</em>。论文预印本与代码即将公开。</p>
+</div>
+
+<p class="en">Some words are closer in meaning than others. <em>Desk</em> and <em>lamp</em> are both furniture, while <em>desk</em> and <em>India</em> have little in common. Most text models, however, start from one-hot vectors or random embeddings, where every pair of words is equally far apart, and leave it to training to discover which words belong together.</p>
+<p class="zh">词与词在语义上有远有近。“书桌”和“台灯”同属家具，“书桌”和“印度”则几乎没有关联。然而，大多数文本模型从 one-hot 向量或随机初始化的嵌入（embedding）出发，任意两个词之间的距离都相同，哪些词彼此相关，只能依靠训练从数据中发现。</p>
+<p class="en">TrajLift starts from what we already know about the words. We write their semantic relations into a graph and let each word's embedding spread over it like heat: first to its closest relatives, then to more distant ones. The resulting embedding reflects semantic similarity before any training begins.</p>
+<p class="zh">TrajLift 从我们对这些词已有的认识出发。我们把词之间的语义关系写成一张图（graph），让每个词的嵌入像热量一样在图上扩散：先到达最相近的词，再到达较远的词。这样得到的嵌入在训练开始之前，就已经反映了语义相似性。</p>
+
+<figure class="single">
+  <svg id="heroG" viewBox="0 0 430 338" role="img" aria-label="Heat spreading from one word across the semantic graph"></svg>
+  <figcaption><span class="en">Heat diffusing from <em>Lamp</em>. Darker nodes hold more heat.</span><span class="zh">热量从“台灯”向外扩散，节点颜色越深表示热量越多。</span> <span id="heroTau" class="num">τ = —</span></figcaption>
+</figure>
+
+<p class="en">How far the heat spreads is controlled by a single continuous number, the diffusion time. Adjusting it word by word gives the same mechanism a second use: it can record where a word occurs in a sequence and how the sequence unfolds around it. Together, this yields a semantic- and position-enhanced text embedding, which we evaluate on word-sequence classification.</p>
+<p class="zh">热量扩散的范围由一个连续的量控制，即扩散时间（diffusion time）。逐词调整这个量，同一机制还能发挥第二个作用：记录一个词在序列中的位置，以及序列在它前后如何展开。两者结合，就得到一种语义与位置增强的文本嵌入（semantic- and position-enhanced text embedding），我们在单词序列分类任务上验证了它的表征能力。</p>
+<p class="en">This post builds the idea in three steps, using a 16-word vocabulary whose semantic hierarchy is known in advance. The words come from the Hong Kong List Learning Test (HKLLT), a verbal memory test. All figures are interactive and computed live in your browser.</p>
+<p class="zh">本文分三步介绍这一构造，并以一个语义层级事先已知的 16 词词表为例。这些词来自香港词语学习测验（Hong Kong List Learning Test，HKLLT），一项言语记忆测验。文中所有图表均可交互，数值在浏览器中实时计算。</p>
+<ol class="toc">
+  <li><a href="#s1"><span class="en">Writing semantic relations into a graph</span><span class="zh">用图写下词之间的语义关系</span></a></li>
+  <li><a href="#s2"><span class="en">Heat diffusion creates semantic similarity</span><span class="zh">热扩散带来语义相似性</span></a></li>
+  <li><a href="#s3"><span class="en">Encoding position and dynamics through diffusion time</span><span class="zh">通过扩散时间编码位置与时序动态</span></a></li>
+  <li><a href="#s4"><span class="en">Putting it together</span><span class="zh">整体流程</span></a></li>
+</ol>
+
+<!-- 1 -->
+<h2 id="s1"><span class="en">1. Writing semantic relations into a graph</span><span class="zh">1. 用图写下词之间的语义关系</span></h2>
+<p class="en">Before an embedding can reflect which words are close, closeness has to be written down in a form an algorithm can use. A weighted graph does this: each word is a node, and the weight of an edge says how closely two words are related.</p>
+<p class="zh">要让嵌入反映哪些词相近，首先要把“相近”写成算法能够使用的形式。带权图正好可以做到：每个词是一个节点，边的权重表示两个词的关联程度。</p>
+<p class="en">Our 16 words come with a natural hierarchy. They fall into four categories (relatives, countries, vegetables and furniture), and the categories form two domains, abstract and concrete. To turn this hierarchy into a distance, we ask how far up the hierarchy two words must go before they fall into the same group. <em>Desk</em> and <em>lamp</em> meet one level up, in furniture, so their distance is 1. <em>Desk</em> and <em>onion</em> meet in the concrete domain, at distance 2. <em>Desk</em> and <em>India</em> meet only at the top, at distance 3. This is the ultrametric distance $d(i,j)$, and the edge weight decays with it:</p>
+<p class="zh">这 16 个词本身带有一个自然的层级：它们分为四个类别（亲属、国家、蔬菜和家具），这些类别又组成两个领域，即抽象与具体。为了把层级转化为距离，我们看两个词需要沿层级向上走几层才会落入同一组。“书桌”和“台灯”向上一层就在“家具”中相遇，距离为 1；“书桌”和“洋葱”要到“具体”这一领域才相遇，距离为 2；“书桌”和“印度”只在最顶层相遇，距离为 3。这就是超度量距离 $d(i,j)$，边权随它递减：</p>
+<div class="math">$$W_{ij} = \rho^{\,1-d(i,j)}$$</div>
+<p class="en">With $\rho = 10$, as in the paper, words in the same category are joined with weight 1, words in the same domain with weight 0.1, and words in different domains with weight 0.01. Figure 1 shows the graph; click a word to see how it connects to the others. Figure 2 shows the same weights as a matrix. Sorted by the hierarchy, the matrix forms nested blocks: small dark blocks for the categories, inside larger and lighter blocks for the domains.</p>
+<p class="zh">取论文中的 $\rho = 10$，同一类别的词之间边权为 1，同一领域的词之间为 0.1，不同领域的词之间为 0.01。图 1 是由此得到的语义图，点击任意一个词可以查看它与其他词的连接。图 2 用矩阵展示同样的边权：按层级排序后，矩阵呈现嵌套的块状结构，深色的小块是类别，外围浅一些的大块是领域。</p>
+
+<figure class="pair">
+  <div class="panel">
+    <svg id="g1" viewBox="0 0 430 338" role="img" aria-label="Semantic hierarchy graph of the 16 words"></svg>
+    <div class="legend" id="g1leg"></div>
+    <figcaption><b class="en">Figure 1.</b><b class="zh">图 1</b> <span class="en">The semantic graph. Click a word to highlight its edges.</span><span class="zh">语义图。点击一个词可以高亮它的连边。</span></figcaption>
+  </div>
+  <div class="panel">
+    <svg id="wmat" viewBox="0 0 362 306" role="img" aria-label="Adjacency matrix heatmap"></svg>
+    <figcaption><b class="en">Figure 2.</b><b class="zh">图 2</b> <span class="en">Edge weights $W$, rows and columns ordered by the hierarchy. Hover for values.</span><span class="zh">边权矩阵 $W$，行与列按层级排序。悬停可查看数值。</span></figcaption>
+  </div>
+</figure>
+
+<p class="en">The ratio $\rho$ sets how sharply the hierarchy is drawn. When $\rho$ is close to 1, all edges have similar weights and the levels blur together. As $\rho$ grows, categories and domains stand out more clearly. The slider below changes $\rho$ for every figure on the page.</p>
+<p class="zh">参数 $\rho$ 决定层级被刻画得有多分明。$\rho$ 接近 1 时，所有边的权重相差不大，各个层级混在一起；$\rho$ 越大，类别和领域就越清晰。下方滑块调整的 $\rho$ 作用于全文所有图表。</p>
+<div class="ctrl">
+  <label for="rho"><span class="en">Weight ratio <i class="mv">ρ</i></span><span class="zh">权重比 <i class="mv">ρ</i></span><input id="rho" type="range" min="1.5" max="30" step="0.5" value="10"><span class="read" id="rhoRead">10.0</span></label>
+  <span class="note"><span class="en">weights:</span><span class="zh">边权：</span> <span id="wTxt" class="num">1 · 0.1 · 0.01</span></span>
+</div>
+<p class="en">Because the hierarchy is fixed in advance, the graph is the same for every sequence and has no learned parameters. It records what we know about the words. The next step is to let each word's embedding make use of it.</p>
+<p class="zh">由于层级是事先给定的，这张图对所有序列都相同，也不含需要学习的参数，它记录的是我们对这些词已有的认识。下一步，是让每个词的嵌入用上这张图。</p>
+
+<!-- 2 -->
+<h2 id="s2"><span class="en">2. Heat diffusion creates semantic similarity</span><span class="zh">2. 热扩散带来语义相似性</span></h2>
+<p class="en">Take the simplest embedding of a word $v$, its one-hot vector $x = e_v$. It identifies the word and nothing more. Its cosine similarity with every other word is zero, so <em>desk</em> is as far from <em>lamp</em> as it is from <em>India</em>. What we want instead is an embedding of <em>desk</em> that contains a good share of <em>lamp</em>, <em>mirror</em> and <em>wardrobe</em>, a smaller share of the vegetables, and almost none of the countries.</p>
+<p class="zh">先看一个词 $v$ 最简单的嵌入，即 one-hot 向量 $x = e_v$。它只标识这个词本身，与其他所有词的余弦相似度都为零，因此“书桌”和“台灯”的距离与它和“印度”的距离完全相同。我们希望得到的，是这样一个“书桌”的嵌入：包含较多“台灯”“镜子”“衣柜”的成分，少量蔬菜类词的成分，几乎不含国家类词的成分。</p>
+<p class="en">Heat diffusion on the graph produces exactly this. Place a unit of heat on $v$ and let it flow along the edges for a time $\tau$. Heat moves from warmer nodes to cooler ones, and it moves faster along heavier edges. The graph Laplacian $L$ describes this flow: it measures how much the value at each node differs from a weighted average of its neighbors. We use the normalized form $L = I - D^{-1/2} W D^{-1/2}$, where $D$ holds the weighted degrees. The heat distribution at time $\tau$ is</p>
+<p class="zh">图上的热扩散（heat diffusion）恰好能得到这样的嵌入。在 $v$ 上放一份热量，让它沿着边流动一段时间 $\tau$。热量从温度高的节点流向温度低的节点，边权越大，流得越快。描述这一过程的是图拉普拉斯矩阵（graph Laplacian）$L$，它衡量每个节点上的值与其邻居加权平均之间的差异。我们使用归一化形式 $L = I - D^{-1/2} W D^{-1/2}$，其中 $D$ 为加权度矩阵。时刻 $\tau$ 的热量分布为</p>
+<div class="math">$$z(\tau) = H_\tau\, x = e^{-\tau L}\, x$$</div>
+<p class="en">and we use $z(\tau)$ as the embedding of $v$. Since category edges are the heaviest, heat reaches the other words in the same category first, then the rest of the domain, and only later the other domain (Figure 3). If we diffuse every word and compare the results, the cosine similarity matrix starts as the identity, develops four category blocks, merges them into two domain blocks, and finally becomes uniform (Figure 4). Drag the slider or press play to watch this happen. The control bar stays at the top of the screen while you scroll through this section.</p>
+<p class="zh">我们把 $z(\tau)$ 作为 $v$ 的嵌入。由于类别内部的边权最大，热量会先到达同一类别的其他词，然后是同一领域的词，最后才到达另一个领域（图 3）。对每个词分别进行扩散并比较结果，余弦相似度矩阵从单位矩阵开始，先出现四个类别块，再合并为两个领域块，最终趋于均匀（图 4）。拖动滑块或点击“播放”可以观察这一过程；向下滚动时，控制栏会固定在屏幕顶部。</p>
+
+<div class="ctrl sticky">
+  <label for="tau"><span class="en">Diffusion time <i class="mv">τ</i></span><span class="zh">扩散时间 <i class="mv">τ</i></span><input id="tau" type="range" min="0" max="1000" step="1" value="500"><span class="read" id="tauRead">—</span></label>
+  <div class="btns" id="presets"></div>
+  <button id="play" type="button">Play</button>
+</div>
+
+<figure class="pair">
+  <div class="panel">
+    <svg id="g2" viewBox="0 0 430 338" role="img" aria-label="Heat distribution after diffusion"></svg>
+    <figcaption><b class="en">Figure 3.</b><b class="zh">图 3</b> <span class="en">Heat on the graph, normalized to its maximum. Click a word to move the source.</span><span class="zh">热量在图上的分布，按最大值归一化。点击一个词可以更换热源。</span><span id="g2cap"></span></figcaption>
+  </div>
+  <div class="panel">
+    <svg id="cmat" viewBox="0 0 362 306" role="img" aria-label="Cosine similarity matrix of diffused embeddings"></svg>
+    <figcaption><b class="en">Figure 4.</b><b class="zh">图 4</b> <span class="en">Cosine similarity between diffused embeddings, $\cos(H_\tau e_i, H_\tau e_j)$.</span><span class="zh">扩散后嵌入之间的余弦相似度 <span style="white-space:nowrap">$\cos(H_\tau e_i, H_\tau e_j)$。</span></span></figcaption>
+  </div>
+</figure>
+
+<p class="en">Why do the levels appear in this order, and so cleanly? The answer lies in the frequencies of the graph. The eigenvectors of $L$ play the role of Fourier modes on the graph. An eigenvector with a small eigenvalue varies slowly, taking similar values across a whole domain or category. One with a large eigenvalue changes sharply between neighboring words. For our graph, the 16 eigenvalues take only four distinct values (Figure 5): a constant mode at $\lambda = 0$, one mode that separates the two domains, two modes that separate the categories within each domain, and twelve modes that distinguish the words within each category. Each level of the hierarchy occupies its own frequency band, with a clear gap between neighboring bands. The larger $\rho$, the wider the gaps.</p>
+<p class="zh">各层级为什么会按这个顺序、而且如此分明地出现？答案在于图的“频率”。$L$ 的特征向量相当于图上的傅里叶基：特征值小的特征向量变化缓慢，在整个领域或类别内取值相近；特征值大的特征向量则在相邻的词之间剧烈变化。对于我们的图，16 个特征值只取四个不同的值（图 5），对应四组特征向量：1 个常数特征向量（$\lambda = 0$），1 个区分两个领域的特征向量，2 个区分各领域内类别的特征向量，以及 12 个区分类别内各个词的特征向量。层级的每一层都占据一个独立的频带，相邻频带之间有明显的间隔，$\rho$ 越大，间隔越宽。</p>
+
+<figure class="single">
+  <svg id="spec" viewBox="0 0 560 150" role="img" aria-label="Laplacian eigenvalue spectrum"></svg>
+  <figcaption><b class="en">Figure 5.</b><b class="zh">图 5</b> <span class="en">Eigenvalues of $L$. Each dot is one eigenvector.</span><span class="zh">$L$ 的特征值，每个点对应一个特征向量。</span><span id="gapTxt"></span></figcaption>
+</figure>
+
+<p class="en">Heat diffusion acts on these bands one at a time. The heat kernel multiplies each eigencomponent by $e^{-\tau\lambda}$, so it is a low-pass filter whose cutoff moves down as $\tau$ grows (Figure 6). The word band has the largest eigenvalue and fades first, then the category band, then the domain band. Each time a band fades, the distinctions it carries disappear from the embedding, and words that differ only in those distinctions become similar. Figure 7 shows the outcome: the average similarity of word pairs rises in order of their hierarchical distance.</p>
+<p class="zh">热扩散逐个作用于这些频带。热核（heat kernel）把每个特征分量乘以 $e^{-\tau\lambda}$，相当于一个低通滤波器，其截止频率随 $\tau$ 增大而降低（图 6）。词级频带的特征值最大，最先衰减，其次是类别频带，最后是领域频带。每当一个频带衰减，它所承载的差异就从嵌入中消失，仅在这些差异上不同的词也随之变得相似。图 7 展示了这一结果：词对的平均相似度按层级距离由近到远依次上升。</p>
+
+<figure class="pair">
+  <div class="panel">
+    <svg id="filt" viewBox="0 0 380 250" role="img" aria-label="Heat kernel filter response"></svg>
+    <figcaption><b class="en">Figure 6.</b><b class="zh">图 6</b> <span class="en">Filter response $e^{-\tau\lambda}$. Dots mark how much of each band remains.</span><span class="zh">滤波器响应 $e^{-\tau\lambda}$，圆点表示各频带保留的比例。</span></figcaption>
+  </div>
+  <div class="panel">
+    <svg id="simc" viewBox="0 0 380 250" role="img" aria-label="Pairwise similarity versus diffusion time"></svg>
+    <div class="legend" id="simLeg"></div>
+    <figcaption><b class="en">Figure 7.</b><b class="zh">图 7</b> <span class="en">Mean cosine similarity by hierarchical distance. Dashed lines mark the three scales introduced next; the red line is the current $\tau$.</span><span class="zh">按层级距离分组的平均余弦相似度。虚线标出下文介绍的三个尺度，红线为当前的 $\tau$。</span></figcaption>
+  </div>
+</figure>
+
+<p class="en">A single continuous parameter therefore decides which level of the hierarchy the embedding resolves. TrajLift uses three diffusion times, called micro, meso and macro, initialized as $\tau_s = -\ln\alpha_s / \lambda_{\max}$ with $\alpha_s = 0.85,\ 0.25,\ 0.002$ and learned during training. The micro scale keeps the differences between individual words, the meso scale keeps the categories apart, and the macro scale keeps only the two domains apart. The buttons in the control bar jump to these values. With these three views, every word has an embedding that reflects its semantic neighborhood at three resolutions, before the model has seen a single sequence.</p>
+<p class="zh">因此，一个连续参数就决定了嵌入分辨到层级的哪一层。TrajLift 使用三个扩散时间，分别称为微观（micro）、中观（meso）和宏观（macro），初始化为 $\tau_s = -\ln\alpha_s / \lambda_{\max}$，其中 $\alpha_s = 0.85,\ 0.25,\ 0.002$，并在训练中学习。微观尺度保留单个词之间的差异，中观尺度区分各个类别，宏观尺度只区分两个领域。控制栏中的三个按钮可以直接跳转到这三个取值。借助这三个视角，每个词在模型见到任何序列之前，就已经拥有了在三种分辨率下反映其语义邻域的嵌入。</p>
+
+<!-- 3 -->
+<h2 id="s3"><span class="en">3. Encoding position and dynamics through diffusion time</span><span class="zh">3. 通过扩散时间编码位置与时序动态</span></h2>
+<p class="en">So far, an embedding depends only on which word it represents. In a sequence, though, each token also carries information beyond its identity: where it occurs, and how the sequence unfolds around it, such as a timestamp, a duration or the pause before the next token. The diffusion time $\tau$ is a continuous parameter, which makes it a natural place to write this information into the embedding. The question is whether adjusting $\tau$ token by token would also disturb the semantic structure that $\tau$ was chosen to capture.</p>
+<p class="zh">到目前为止，嵌入只取决于它表示的是哪个词。但在序列中，每个 token 还携带着词本身之外的信息：它出现在什么位置，以及序列在它前后如何展开，例如时间戳、持续时长或与下一个 token 之间的停顿。扩散时间 $\tau$ 是一个连续参数，自然可以作为把这类信息写入嵌入的入口。问题在于：逐个 token 调整 $\tau$，是否会同时破坏 $\tau$ 原本用来刻画的语义结构？</p>
+<p class="en">The spectrum answers this. Section 2 showed that the levels of the hierarchy occupy separate frequency bands, with a spectral gap between neighboring bands (Figure 5). A scale resolves a given level because its filter keeps the bands up to that level and suppresses the higher-frequency bands beyond it. Changing $\tau$ moves this cutoff. As long as the cutoff stays within the same gap, the scale still resolves the same level, and only the attenuation within the retained bands changes. Expanding to first order:</p>
+<p class="zh">谱结构给出了答案。第 2 节中我们看到，层级的各个层次占据相互分离的频带，相邻频带之间存在谱间隔（spectral gap），如图 5 所示。一个尺度能分辨某一层级，是因为它的滤波器保留了直到该层级的频带，并抑制了更高频的频带。改变 $\tau$ 会移动这一截止位置。只要截止位置仍处于同一个谱间隔内，该尺度分辨的层级就保持不变，改变的只是保留频带内部的衰减程度。做一阶展开：</p>
+<div class="math">$$z(\tau+\Delta\tau) = H_\tau x \;-\; \Delta\tau\, L H_\tau x \;+\; O(\Delta\tau^2)$$</div>
+<p class="en">The zero-order term is the structural embedding, which the modulation leaves unchanged. The modulation enters only through the first-order term, which is proportional to $\Delta\tau$ and passes through the Laplacian. In other words, the change follows the edges of the graph, as a little more heat flows from the word to its neighbors. The semantic structure stays in place, and the new information is layered on top of it.</p>
+<p class="zh">零阶项就是结构嵌入，不受调制影响。调制只通过一阶项进入，该项与 $\Delta\tau$ 成正比，并经过拉普拉斯矩阵作用。换言之，这一变化沿着图的边发生，表现为更多的热量从这个词流向它的邻居。语义结构因此保持不变，新的信息叠加在它之上。</p>
+<p class="en">This gives a general recipe. Let $s_k$ be any continuous scalar attached to the token at position $k$. We shift the diffusion time at each scale by</p>
+<p class="zh">由此得到一个通用的做法。设 $s_k$ 是附着在第 $k$ 个 token 上的任意连续标量，我们按下式调整每个尺度的扩散时间：</p>
+<div class="math">$$\tilde\tau_k^{(s)} = \tau_s \left(1 + \gamma_s\, \varphi(s_k)\right)$$</div>
+<p class="en">where $\varphi$ is a monotone compression and $\gamma_s \ge 0$ sets the modulation strength. The index $k$ only identifies the token. What enters the embedding is the continuous value <span style="white-space:nowrap">$s_k$,</span> which can be a position coordinate, a timestamp or a measure of how the sequence evolves. We bound $\gamma_s$ so that, for typical signals, $\tilde\tau$ stays within a factor $r$ of $\tau_s$. Figure 8 places the resulting ranges, for $r = 3$, against the regions in which each level is resolved.</p>
+<p class="zh">其中 $\varphi$ 是单调的压缩函数，$\gamma_s \ge 0$ 控制调制强度。下标 $k$ 只用来标识 token，真正写入嵌入的是连续值 $s_k$，它可以是位置坐标、时间戳，也可以是刻画序列演化过程的量。我们对 $\gamma_s$ 加以约束，使得对于常见的信号取值，$\tilde\tau$ 不超过 $\tau_s$ 的 $r$ 倍。图 8 把 $r = 3$ 时各尺度的调制范围，与各层级被分辨的区域放在一起比较。</p>
+
+<figure class="single">
+  <svg id="regime" viewBox="0 0 560 168" role="img" aria-label="Modulation range of each scale against the regions where each level is resolved"></svg>
+  <figcaption><b class="en">Figure 8.</b><b class="zh">图 8</b> <span class="en">Modulation range of each scale on a log $\tau$ axis. Shaded regions mark which level the heat kernel resolves, with boundaries at $\tau = 1/\lambda$ of each band; the transitions between regions are gradual. Solid bars run from $\tau_s$ to $3\tau_s$; dashed extensions reach the largest shift used in the recall example.</span><span class="zh">对数 $\tau$ 轴上各尺度的调制范围。底色区域表示热核所分辨的层级，区域边界位于各频带的 $\tau = 1/\lambda$ 处，区域之间是渐变过渡。实线段为 $\tau_s$ 到 $3\tau_s$，虚线延伸到回忆任务示例中使用的最大偏移。</span><span id="regTxt"></span></figcaption>
+</figure>
+
+<p class="en">With $r = 3$, each scale's range stays inside its own region. Within this range, changing $\tilde\tau$ changes how far the heat has spread, but not which level the scale resolves.<span id="mgTxt"></span></p>
+<p class="zh">取 $r = 3$ 时，每个尺度的调制范围都落在各自的区域内。在这一范围内改变 $\tilde\tau$，改变的是热量扩散的程度，而不是该尺度所分辨的层级。<span id="mgTxtZ"></span></p>
+
+<p class="en">As an example, consider the HKLLT recall task. After studying the list, a participant recalls as many words as possible, in any order, and the pauses between recalled words reflect how memory is searched. Here $s_k$ is the latency $\delta_k$ in seconds between consecutive recalled words, compressed with $\varphi(\delta) = \log(1+\delta)$, and $\gamma_s$ is initialized so that $\tilde\tau$ reaches $3\tau_s$ at the 90th-percentile latency. Longer pauses, up to a cap of 20 seconds, produce the dashed extensions in Figure 8. The order of the words is handled by the sequence encoder in Section 4, so the diffusion time carries only the timing. Figure 9 shows an example recall sequence. Select a word to see its embedding, change the latency at that position with the slider, and switch scales to compare the three channels.</p>
+<p class="zh">以 HKLLT 回忆任务为例。受试者在学习词表后尽可能多地回忆其中的词，顺序不限，相邻两次回忆之间的停顿反映了记忆检索的过程。此时 $s_k$ 取相邻两次回忆之间的间隔 $\delta_k$（单位为秒），用 $\varphi(\delta) = \log(1+\delta)$ 压缩；$\gamma_s$ 的初始化使间隔达到第 90 百分位数时 $\tilde\tau$ 恰为 $3\tau_s$。更长的停顿（上限为 20 秒）对应图 8 中的虚线延伸。词的先后顺序由第 4 节的序列编码器处理，扩散时间只承载时间信息。图 9 给出了一条示例回忆序列。选择其中一个词可以查看它的嵌入，用滑块调整该位置的间隔，切换尺度可以比较三个通道。</p>
+
+<div class="ctrl sticky">
+  <label for="dk"><span class="en">Latency <i class="mv">δ</i><sub><i class="mv">k</i></sub> at the selected position</span><span class="zh">所选位置的间隔 <i class="mv">δ</i><sub><i class="mv">k</i></sub></span><input id="dk" type="range" min="0" max="20" step="0.1" value="9.5"><span class="read" id="dkRead">9.5 s</span></label>
+  <div class="btns" id="scaleTabs" role="group" aria-label="Scale"></div>
+</div>
+
+<figure>
+  <div class="seq" id="seq"></div>
+  <div class="stats" id="stats"></div>
+  <svg id="bars" viewBox="0 0 560 250" role="img" aria-label="Base and modulated embeddings"></svg>
+  <svg id="resb" viewBox="0 0 560 170" role="img" aria-label="Diffusion residual"></svg>
+  <figcaption><b class="en">Figure 9.</b><b class="zh">图 9</b> <span id="barT"></span><span class="en"> Top, on a log scale: the base embedding $z_{\text{base}}$ (dashed outline) and the modulated embedding $z_{\text{mod}}$ (filled). Bottom: the residual $\Delta z = z_{\text{mod}} - z_{\text{base}}$; blue marks heat flowing out, red heat flowing in. The latency after each word is shown between the chips; the last word has $\delta = 0$.</span><span class="zh">上图为对数坐标：虚线框为基准嵌入 $z_{\text{base}}$，实心柱为调制后的嵌入 $z_{\text{mod}}$。下图为残差 $\Delta z = z_{\text{mod}} - z_{\text{base}}$，蓝色表示热量流出，红色表示热量流入。词之间的数字为该词之后的间隔，最后一个词的 $\delta = 0$。</span></figcaption>
+</figure>
+
+<p class="en">A longer pause means a longer diffusion time, so more heat leaves the source word and spreads to its neighbors. TrajLift keeps both the modulated embedding $z_{\text{mod}}$ and the residual $\Delta z$, which serves as a dedicated channel for position and dynamics.</p>
+<p class="zh">间隔越长，扩散时间越长，就有更多热量离开源词、流向它的邻居。TrajLift 同时保留调制后的嵌入 $z_{\text{mod}}$ 和残差 $\Delta z$，后者作为专门承载位置与时序动态（position and dynamics）信息的通道。</p>
+<p class="en">The residual grows smoothly and monotonically with the signal (Figure 10), so a continuous signal maps to a continuous change in the embedding. The three scales also respond to different parts of the spectrum. To first order, the residual applies the response $\lambda e^{-\tau_s \lambda}$ to each eigencomponent. This is a band-pass filter: it vanishes at $\lambda = 0$ and as $\lambda \to \infty$, and peaks at $\lambda^\star = 1/\tau_s$ (Figure 11). Since each scale has its own $\tau_s$, the peaks fall in different places along the spectrum.</p>
+<p class="zh">残差随信号平滑、单调地增大（图 10），因此连续的信号对应于嵌入的连续变化。此外，三个尺度对应于谱的不同部分。在一阶近似下，残差对每个特征分量施加的响应为 $\lambda e^{-\tau_s \lambda}$。这是一个带通滤波器：它在 $\lambda = 0$ 和 $\lambda \to \infty$ 时趋于零，在 $\lambda^\star = 1/\tau_s$ 处取得峰值（图 11）。由于各尺度的 $\tau_s$ 不同，峰值落在谱的不同位置。</p>
+
+<figure class="pair">
+  <div class="panel">
+    <svg id="normc" viewBox="0 0 380 240" role="img" aria-label="Residual norm versus latency"></svg>
+    <div class="legend" id="nmLeg"></div>
+    <figcaption><b class="en">Figure 10.</b><b class="zh">图 10</b> <span class="en">Residual norm $\|\Delta z\|$ as a function of latency, for each scale.</span><span class="zh">各尺度的残差范数 $\|\Delta z\|$ 随间隔的变化。</span></figcaption>
+  </div>
+  <div class="panel">
+    <svg id="bandp" viewBox="0 0 380 240" role="img" aria-label="Band-pass response of the residual at three scales"></svg>
+    <div class="legend" id="bpLeg"></div>
+    <figcaption><b class="en">Figure 11.</b><b class="zh">图 11</b> <span class="en">Residual response $\lambda e^{-\tau_s\lambda}$, each normalized to its peak. Dashed lines mark the three bands.</span><span class="zh">残差响应 $\lambda e^{-\tau_s\lambda}$，各自按峰值归一化。虚线标出三个频带。</span></figcaption>
+  </div>
+</figure>
+
+<p class="en">Decomposing the residual energy $\|\Delta z\|^2$ by eigenspace makes this division of labor explicit (Figure 12). The coarser the scale, the more of its residual energy lies in the low-frequency domain and category bands. In the recall example, a pause within a category and a delay when switching categories are therefore captured by different residual channels.</p>
+<p class="zh">将残差能量 $\|\Delta z\|^2$ 按特征子空间分解，可以更直接地看到这种分工（图 12）：尺度越粗，残差能量越集中于低频的领域频带和类别频带。因此在回忆任务的例子中，类别内部的停顿与跨类别切换时的延迟会被不同的残差通道分别捕获。</p>
+
+<figure class="single">
+  <svg id="energy" viewBox="0 0 560 150" role="img" aria-label="Residual energy by spectral band"></svg>
+  <figcaption><b class="en">Figure 12.</b><b class="zh">图 12</b> <span class="en">Share of residual energy in each band, for the selected position and latency.</span><span class="zh">所选位置与间隔下，残差能量在各频带中的占比。</span></figcaption>
+</figure>
+
+<p class="en">Each position in a sequence now carries, at each of the three scales, an embedding of the word's meaning and a residual that records its position and dynamics. What remains is to combine them.</p>
+<p class="zh">至此，序列中的每个位置在三个尺度上各有两个向量：表达词义的嵌入，以及记录位置与时序动态的残差。剩下的工作是把它们组合起来。</p>
+
+<!-- 4 -->
+<h2 id="s4"><span class="en">4. Putting it together</span><span class="zh">4. 整体流程</span></h2>
+<p class="en">At each position, we normalize the embedding and the residual at each scale and concatenate them into $\left[\mathrm{norm}(z^{(s)}_{\text{mod}}) \,\|\, \mathrm{norm}(\Delta z^{(s)})\right] \in \mathbb{R}^{2N}$. The three scales are then merged from fine to coarse. The micro scale serves as the backbone, and the meso and macro scales add context through learned gates, which decide dimension by dimension how much of the coarser view to let in:</p>
+<p class="zh">在每个位置上，我们把每个尺度的嵌入和残差分别归一化，再拼接为 $\left[\mathrm{norm}(z^{(s)}_{\text{mod}}) \,\|\, \mathrm{norm}(\Delta z^{(s)})\right] \in \mathbb{R}^{2N}$。三个尺度随后由细到粗依次融合：微观尺度作为主干，中观和宏观尺度通过学习得到的门控补充上下文，门控逐维决定引入多少较粗尺度的信息：</p>
+<div class="math">$$\begin{aligned} F_0 &= Z^{\text{micro}} \\ F_1 &= F_0 + \sigma(F_0 W_{\text{meso}}) \odot Z^{\text{meso}} \\ F &= F_1 + \sigma(F_1 W_{\text{macro}}) \odot Z^{\text{macro}} \end{aligned}$$</div>
+<p class="en">The fused sequence is projected, encoded by a two-layer LSTM and classified by a linear layer, all trained end to end with cross-entropy.</p>
+<p class="zh">融合后的序列经过线性投影，由两层 LSTM 编码，最后经线性层完成分类，整个模型以交叉熵损失端到端训练。</p>
+<p class="en">Does combining structure and timing pay off? Our synthetic ST-XOR benchmark is designed to test exactly this. Its two classes have the same distribution of edge types and the same mean latency, so they can be told apart only through the interaction between structure and timing. On the three-level variant every baseline stays near chance, while TrajLift reaches 98.7% accuracy. On real data, we apply TrajLift to HKLLT delayed-recall sequences for Alzheimer's screening, where it outperforms clinical measures and sequence and graph baselines, with 80.5% and 81.0% accuracy on Trials 4 and 5.</p>
+<p class="zh">把结构与时间结合起来是否真的有用？我们构造的合成基准 ST-XOR 正是为检验这一点而设计的。它的两类序列具有相同的边类型分布和相同的平均间隔，只有结构与时间的交互能够区分它们。在三层层级的版本上，所有基线方法的准确率都接近随机水平，而 TrajLift 达到 98.7%。在真实数据上，我们把 TrajLift 用于阿尔茨海默病筛查中的 HKLLT 延迟回忆序列，它同样优于临床指标以及序列模型和图模型基线，在第 4 次和第 5 次试验上的准确率分别为 80.5% 和 81.0%。</p>
+
+<h2 id="s5"><span class="en">Summary</span><span class="zh">总结</span></h2>
+<p class="en">TrajLift turns prior knowledge about words into an embedding in three steps. A graph records the semantic hierarchy. Heat diffusion on that graph gives each word an embedding that reflects its semantic neighborhood from the start, with one continuous time choosing the level of detail. Adjusting that time token by token then writes position and dynamics into the same embedding, within a range where the semantic structure stays intact. The paper gives the full method, the spectral analysis and the experiments.</p>
+<p class="zh">TrajLift 用三步把关于词的先验知识转化为嵌入。首先，用一张图记录语义层级。其次，在图上进行热扩散，使每个词的嵌入从一开始就反映其语义邻域，并由一个连续的扩散时间决定细节的层次。最后，逐个 token 调整这一时间，在语义结构保持不变的范围内，把位置与时序动态写入同一个嵌入。完整的方法、谱分析和实验见论文。</p>
+
+<div class="notes">
+  <p class="en">All numbers are computed in the browser: the 16-node hierarchy graph, the eigendecomposition of its normalized Laplacian (Jacobi method), the heat kernel and the residuals.</p>
+  <p class="zh">所有数值均在浏览器中计算，包括 16 个节点的层级图、归一化拉普拉斯矩阵的特征分解（Jacobi 方法）、热核以及残差。</p>
+  <p class="en">Parameters follow the paper's appendix: $\rho = 10$ (adjustable), $\alpha = 0.85 / 0.25 / 0.002$, $r = 3$, $\varphi(\delta) = \log(1+\delta)$ with latencies clipped at 20 s. The paper does not report $\delta_{90}$; we use 10 s for illustration. The figures show initial diffusion times; the values learned on HKLLT Trial 4 are 0.19, 0.50 and 4.14.</p>
+  <p class="zh">参数取自论文附录：$\rho = 10$（可调），$\alpha = 0.85 / 0.25 / 0.002$，$r = 3$，$\varphi(\delta) = \log(1+\delta)$，间隔截断于 20 秒。论文未给出 $\delta_{90}$ 的具体数值，此处取 10 秒作为示意。图中所示为扩散时间的初始值，在 HKLLT 第 4 次试验上学到的值分别为 0.19、0.50 和 4.14。</p>
+  <p class="en">Word list from the HKLLT (Chan &amp; Kwok, 1998); "Mustard" stands for mustard greens. The recall sequence in Figure 9 is a constructed example, not data from a participant. In Figure 8, region boundaries follow the diffusion regimes in the paper's Appendix A.</p>
+  <p class="zh">词表来自 HKLLT（Chan &amp; Kwok, 1998），图中的中文词形为示意翻译。图 9 中的回忆序列为构造的示例，并非真实受试者数据。图 8 中的区域边界依据论文附录 A 中对扩散区间的划分。</p>
+</div>
+<p class="post-footer">2026 © Jiawen Kang.</p>
+</article>
+<div id="tip" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const NS="http://www.w3.org/2000/svg";
+const N=16;
+let LANG=document.documentElement.getAttribute("data-lang")==="zh"?"zh":"en";
+const L=(en,zh)=>LANG==="zh"?zh:en;
+const TXT={
+  en:{cats:["Relatives","Countries","Vegetables","Furniture"],
+      words:["Grandmother","Aunt","Niece","Cousin","India","Switzerland","Laos","Chile","Eggplant","Cucumber","Mustard","Onion","Desk","Mirror","Lamp","Wardrobe"],
+      doms:["ABSTRACT","CONCRETE"],scale:["micro","meso","macro"],band:["domain","category","word"],
+      simn:["same category","same domain","different domain"],dname:["itself","same category","same domain","different domain"]},
+  zh:{cats:["亲属","国家","蔬菜","家具"],
+      words:["祖母","阿姨","侄女","表亲","印度","瑞士","老挝","智利","茄子","黄瓜","芥菜","洋葱","书桌","镜子","台灯","衣柜"],
+      doms:["抽象","具体"],scale:["微观","中观","宏观"],band:["领域","类别","词级"],
+      simn:["同类别","同领域","不同领域"],dname:["自身","同类别","同领域","不同领域"]}};
+const X_=()=>TXT[LANG];
+const W=i=>X_().words[i];
+const Q=w=>LANG==="zh"?`“${w}”`:`<em>${w}</em>`;
+const cat=i=>i>>2, dom=i=>i>>3;
+const dU=(i,j)=>i===j?0:cat(i)===cat(j)?1:dom(i)===dom(j)?2:3;
+const ALPHA=[0.85,0.25,0.002];
+const SC=["s1","s2","s3"];
+const R_RATIO=3, D90=10, DCLIP=20;
+const phi=d=>Math.log(1+Math.min(Math.max(d,0),DCLIP));
+const GAMMA=(R_RATIO-1)/phi(D90);
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const fmtS=v=>{const a=Math.abs(v); if(a===0) return "0"; if(a>=0.1) return v.toFixed(3); if(a>=0.001) return v.toFixed(4); return v.toExponential(1);};
+
+/* ---------- linear algebra ---------- */
+function jacobi(A0){const n=A0.length;const A=A0.map(r=>r.slice());const V=A0.map((_,i)=>A0.map((_,j)=>i===j?1:0));
+  for(let sw=0;sw<100;sw++){let off=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++)off+=A[p][q]*A[p][q];if(off<1e-24)break;
+    for(let p=0;p<n-1;p++)for(let q=p+1;q<n;q++){if(Math.abs(A[p][q])<1e-300)continue;
+      const th=(A[q][q]-A[p][p])/(2*A[p][q]);const t=(th>=0?1:-1)/(Math.abs(th)+Math.sqrt(th*th+1));const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const a=A[k][p],b=A[k][q];A[k][p]=c*a-s*b;A[k][q]=s*a+c*b;}
+      for(let k=0;k<n;k++){const a=A[p][k],b=A[q][k];A[p][k]=c*a-s*b;A[q][k]=s*a+c*b;}
+      for(let k=0;k<n;k++){const a=V[k][p],b=V[k][q];V[k][p]=c*a-s*b;V[k][q]=s*a+c*b;}}}
+  const idx=[...Array(n).keys()].sort((a,b)=>A[a][a]-A[b][b]);
+  return {vals:idx.map(i=>Math.max(0,A[i][i])),U:V.map(r=>idx.map(i=>r[i]))};}
+const bandOf=m=>m===0?-1:m===1?0:m<=3?1:2;
+
+const S={rho:10,src:14,tau:1,seq:[[12,1.2],[14,0.9],[13,5.8],[15,9.5],[4,1.4],[5,2.6],[6,12.0],[8,0]],sel:3,scale:0};
+let G={};
+function compute(){
+  const Wm=[...Array(N)].map((_,i)=>[...Array(N)].map((_,j)=>i===j?0:Math.pow(S.rho,1-dU(i,j))));
+  const deg=Wm.map(r=>r.reduce((a,b)=>a+b,0));
+  const Lm=Wm.map((r,i)=>r.map((w,j)=>(i===j?1:0)-w/Math.sqrt(deg[i]*deg[j])));
+  const {vals,U}=jacobi(Lm);
+  const lmax=vals[N-1];
+  const bandVal=[vals[1],(vals[2]+vals[3])/2,vals.slice(4).reduce((a,b)=>a+b,0)/12];
+  G={W:Wm,vals,U,lmax,bandVal,tauB:ALPHA.map(a=>-Math.log(a)/lmax)};
+}
+function lift(tau,i){const z=new Float64Array(N);const {vals,U}=G;
+  for(let m=0;m<N;m++){const c=Math.exp(-tau*vals[m])*U[i][m];for(let j=0;j<N;j++)z[j]+=U[j][m]*c;}return z;}
+const dot=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;};
+const nrm=a=>Math.sqrt(dot(a,a));
+const cos=(a,b)=>dot(a,b)/(nrm(a)*nrm(b));
+const modTau=(s,d)=>G.tauB[s]*(1+GAMMA*phi(d));
+
+/* ---------- color ---------- */
+let T={};
+function readTokens(){const cs=getComputedStyle(document.documentElement);
+  ["h0","h1","h2","cool","ink","ink2","muted","line","line2","bg","tint","accent","s1","s2","s3"].forEach(k=>T[k]=cs.getPropertyValue("--"+k).trim());}
+const hx=h=>{h=h.replace("#","");if(h.length===3)h=h.split("").map(c=>c+c).join("");return [0,2,4].map(i=>parseInt(h.substr(i,2),16));};
+const mixc=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+function rampRGB(t){t=clamp(t);const a=hx(T.h0),b=hx(T.h1),c=hx(T.h2);return t<.5?mixc(a,b,t*2):mixc(b,c,(t-.5)*2);}
+const css=r=>`rgb(${r[0]},${r[1]},${r[2]})`;
+const ramp=t=>css(rampRGB(t));
+const lum=r=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(r[0])+.7152*f(r[1])+.0722*f(r[2]);};
+const textOn=r=>lum(r)>0.38?"#1a1a1a":"#ffffff";
+
+/* ---------- tooltip ---------- */
+const tip=$("#tip");
+function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;
+  let Lx=x+14,Ty=y+14;if(Lx+w>innerWidth-8)Lx=x-w-14;if(Ty+h>innerHeight-8)Ty=y-h-14;tip.style.left=Math.max(8,Lx)+"px";tip.style.top=Math.max(8,Ty)+"px";}
+document.addEventListener("pointermove",e=>{if(e.target.closest&&e.target.closest("[data-xhair]"))return;
+  const t=e.target.closest&&e.target.closest("[data-tip]");if(t)showTip(t.getAttribute("data-tip"),e.clientX,e.clientY);else tip.hidden=true;});
+document.addEventListener("scroll",()=>tip.hidden=true,{passive:true});
+function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+
+/* ---------- graph (viewBox 430×338) ---------- */
+const catY=c=>(c&1)?182:28;
+function nodePos(i){const c=cat(i),j=i&3;const x0=(dom(i)?215:5)+5;const y0=catY(c);
+  return [x0+52+(j&1)*96,y0+57+(j>>1)*50];}
+function makeGraph(svg,onClick){
+  let h="";
+  for(let d=0;d<2;d++){const dx=d?215:5;h+=`<rect class="dom-rect" x="${dx}" y="4" width="210" height="330" rx="10"/><text class="dom-lbl" x="${dx+10}" y="20">${X_().doms[d]}</text>`;}
+  for(let c=0;c<4;c++){const x0=((c>>1)?215:5)+5;const y0=catY(c);h+=`<rect class="cat-rect" x="${x0}" y="${y0}" width="200" height="146" rx="8"/><text class="cat-lbl" x="${x0+9}" y="${y0+17}">${X_().cats[c]}</text>`;}
+  h+=`<g class="edges"></g><g class="nodes"></g>`;
+  svg.innerHTML=h;
+  const eg=svg.querySelector(".edges"),ng=svg.querySelector(".nodes");
+  const edges=[];
+  for(let d=3;d>=1;d--)for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){if(dU(i,j)!==d)continue;const [x1,y1]=nodePos(i),[x2,y2]=nodePos(j);
+    const l=document.createElementNS(NS,"line");l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);eg.appendChild(l);edges.push({i,j,d,el:l});}
+  const nodes=[];
+  for(let i=0;i<N;i++){const [x,y]=nodePos(i);const g=document.createElementNS(NS,"g");g.setAttribute("class","node");
+    if(onClick){g.setAttribute("tabindex","0");g.setAttribute("role","button");g.setAttribute("aria-label",W(i));
+      g.addEventListener("click",()=>onClick(i));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onClick(i);}});}
+    const ring=document.createElementNS(NS,"circle");ring.setAttribute("cx",x);ring.setAttribute("cy",y);ring.setAttribute("r",17);ring.setAttribute("fill","none");
+    const c=document.createElementNS(NS,"circle");c.setAttribute("cx",x);c.setAttribute("cy",y);c.setAttribute("r",13);
+    const t=document.createElementNS(NS,"text");t.setAttribute("x",x);t.setAttribute("y",(i&3)<2?y-21:y+31);t.setAttribute("text-anchor","middle");t.setAttribute("class","nlab");t.textContent=W(i);
+    const hit=document.createElementNS(NS,"circle");hit.setAttribute("cx",x);hit.setAttribute("cy",y);hit.setAttribute("r",22);hit.setAttribute("fill","transparent");
+    g.appendChild(ring);g.appendChild(c);g.appendChild(t);g.appendChild(hit);ng.appendChild(g);nodes.push({g,c,t,ring});}
+  return {edges,nodes};
+}
+function edgeBase(e){const w=Math.pow(S.rho,1-e.d);e.el.setAttribute("stroke",T.ink2);e.el.setAttribute("stroke-opacity",(0.04+0.5*Math.pow(w,0.55)).toFixed(3));e.el.setAttribute("stroke-width",e.d===1?1.8:e.d===2?1.1:0.7);}
+function paintHeat(gr,z,src){
+  let mx=0;for(let j=0;j<N;j++)mx=Math.max(mx,z[j]);
+  gr.edges.forEach(edgeBase);
+  gr.nodes.forEach((n,j)=>{const t=z[j]/mx;n.c.setAttribute("fill",ramp(t));n.c.setAttribute("stroke",T.line2);n.c.setAttribute("stroke-width",1);
+    n.ring.setAttribute("stroke",j===src?T.accent:"none");n.ring.setAttribute("stroke-width",2);
+    n.t.setAttribute("class","nlab"+(j===src?" on":""));
+    n.g.setAttribute("data-tip",`<b>${W(j)}</b>　<i class="mv">z</i> = <span class="mono">${fmtS(z[j])}</span><br>${L("distance to source","与热源的距离")}: <i class="mv">d</i> = ${dU(src,j)}`);});
+}
+
+/* ---------- section 1 ---------- */
+let g1,g1sel=14;
+function renderG1(){
+  const tv=[1,.72,.38,.12];
+  g1.edges.forEach(e=>{const hit=e.i===g1sel||e.j===g1sel;edgeBase(e);
+    if(hit){e.el.setAttribute("stroke",T.accent);e.el.setAttribute("stroke-opacity",e.d===1?.9:e.d===2?.5:.22);e.el.setAttribute("stroke-width",e.d===1?2.4:e.d===2?1.4:0.9);}
+    else e.el.setAttribute("stroke-opacity",(+e.el.getAttribute("stroke-opacity")*0.5).toFixed(3));});
+  g1.nodes.forEach((n,j)=>{const d=dU(g1sel,j);n.c.setAttribute("fill",ramp(tv[d]));n.c.setAttribute("stroke",T.line2);
+    n.ring.setAttribute("stroke",j===g1sel?T.accent:"none");n.ring.setAttribute("stroke-width",2);n.t.setAttribute("class","nlab"+(j===g1sel?" on":""));
+    const w=d?Math.pow(S.rho,1-d):0;n.g.setAttribute("data-tip",`<b>${W(g1sel)} – ${W(j)}</b><br><i class="mv">d</i> = ${d}　<i class="mv">w</i> = <span class="mono">${d?fmtS(w):"—"}</span>`);});
+  $("#g1leg").innerHTML=X_().dname.map((nm,d)=>`<span><span class="sw" style="background:${ramp(tv[d])}"></span>${nm}${d?` (<i class="mv">d</i> = ${d})`:""}</span>`).join("");
+}
+function matrix(svg,val,tipf){
+  const L0=84,T0=26,c=17;let h="";
+  for(let c4=0;c4<4;c4++)h+=`<text class="tkb" x="${L0+c4*4*c+2*c}" y="${T0-9}" text-anchor="middle">${X_().cats[c4]}</text>`;
+  for(let i=0;i<N;i++){h+=`<text class="tkb" x="${L0-6}" y="${T0+i*c+c/2+4}" text-anchor="end">${W(i)}</text>`;
+    for(let j=0;j<N;j++){const v=val(i,j);h+=`<rect x="${L0+j*c}" y="${T0+i*c}" width="${c-1}" height="${c-1}" fill="${ramp(v)}" data-tip="${tipf(i,j).replace(/"/g,"&quot;")}"/>`;}}
+  for(let k=1;k<4;k++){const p=k*4*c-0.5;const sw=k===2?3:1.6;h+=`<line x1="${L0+p}" x2="${L0+p}" y1="${T0}" y2="${T0+N*c}" stroke="${T.bg}" stroke-width="${sw}"/><line y1="${T0+p}" y2="${T0+p}" x1="${L0}" x2="${L0+N*c}" stroke="${T.bg}" stroke-width="${sw}"/>`;}
+  svg.innerHTML=h;
+}
+function renderW(){const lr=Math.log(S.rho*S.rho);
+  matrix($("#wmat"),(i,j)=>{const w=G.W[i][j];return w>0?0.2+0.8*(1+Math.log(w)/lr):0;},
+    (i,j)=>`<b>${W(i)} – ${W(j)}</b><br><i class='mv'>W</i> = <span class='mono'>${i===j?L("0 (no self-loop)","0（无自环）"):fmtS(G.W[i][j])}</span>`);}
+function renderSpec(){
+  const svg=$("#spec"),Wd=560,ml=16,mr=16,y0=100;const xmax=Math.max(1.5,G.lmax*1.1);const X=l=>ml+l/xmax*(Wd-ml-mr);
+  let h=`<line class="axis" x1="${ml}" x2="${Wd-mr}" y1="${y0}" y2="${y0}"/>`;
+  for(let k=0;k<=Math.floor(xmax/0.25);k++){const l=k*0.25;h+=`<line class="axis" x1="${X(l)}" x2="${X(l)}" y1="${y0}" y2="${y0+4}"/><text class="tk" x="${X(l)}" y="${y0+16}" text-anchor="middle">${l.toFixed(2)}</text>`;}
+  h+=`<text class="tk" x="${Wd-mr}" y="${y0+32}" text-anchor="end">${L("eigenvalue ","特征值 ")}<tspan class="mv">λ</tspan></text>`;
+  const names=L(["constant","domain","category","word"],["常数","领域","类别","词级"]);
+  const groups=[{l:0,n:1},{l:G.bandVal[0],n:1},{l:G.bandVal[1],n:2},{l:G.bandVal[2],n:12}];
+  const tv=[.12,.38,.72,1];
+  groups.forEach((g,k)=>{const x=X(g.l);for(let q=0;q<g.n;q++){const cx=x+(q%6-((Math.min(g.n,6)-1)/2))*8.5, cy=y0-9-Math.floor(q/6)*8.5;h+=`<circle cx="${cx}" cy="${cy}" r="3.4" fill="${ramp(tv[k])}" stroke="${T.ink2}" stroke-opacity=".35"/>`;}
+    const up=[64,36,36,48][k]; const ty=y0-up;const an=k===0?"start":"middle";const xx=k===0?x-3:x;
+    h+=`<text class="tkb" x="${xx}" y="${ty}" text-anchor="${an}">${names[k]} ×${g.n}</text><text class="tk" x="${xx}" y="${ty+12}" text-anchor="${an}"><tspan class="mv">λ</tspan> = ${g.l.toFixed(3)}</text>`;});
+  svg.innerHTML=h;
+  const a=(G.bandVal[2]-G.bandVal[1]).toFixed(3),b=(G.bandVal[1]-G.bandVal[0]).toFixed(3);
+  $("#gapTxt").textContent=L(` Gap between category and item bands: ${a}; between domain and category bands: ${b}.`,`类别频带与词级频带的间隔为 ${a}，领域频带与类别频带的间隔为 ${b}。`);
+}
+function renderStep1(){renderG1();renderW();renderSpec();
+  $("#rhoRead").textContent=S.rho.toFixed(1);
+  $("#wTxt").textContent=`1 · ${fmtS(1/S.rho)} · ${fmtS(1/S.rho/S.rho)}`;}
+
+/* ---------- section 2 ---------- */
+let g2;
+const TMIN=-2,TMAX=Math.log10(50);
+const sl2tau=v=>Math.pow(10,TMIN+(TMAX-TMIN)*v/1000);
+const tau2sl=t=>Math.round((Math.log10(t)-TMIN)/(TMAX-TMIN)*1000);
+function renderFilt(){
+  const svg=$("#filt"),Wd=380,Hd=250,ml=32,mr=10,mt=14,mb=56;const xmax=Math.max(1.5,G.lmax*1.12);
+  const X=l=>ml+l/xmax*(Wd-ml-mr),Y=v=>mt+(1-v)*(Hd-mt-mb);let h="";const BAND=X_().band;
+  [0,.5,1].forEach(v=>h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tk" x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`);
+  for(let k=0;k<=Math.floor(xmax/0.5);k++){const l=k*0.5;h+=`<text class="tk" x="${X(l)}" y="${Y(0)+14}" text-anchor="middle">${l.toFixed(1)}</text>`;}
+  const pts=[];for(let i=0;i<=140;i++){const l=xmax*i/140;pts.push(`${X(l).toFixed(1)},${Y(Math.exp(-S.tau*l)).toFixed(1)}`);}
+  h+=`<path d="M${X(0)},${Y(0)} L${pts.join(" L")} L${X(xmax)},${Y(0)} Z" fill="${T.accent}" fill-opacity=".08"/>`;
+  h+=`<path d="M${pts.join(" L")}" fill="none" stroke="${T.accent}" stroke-width="2"/>`;
+  G.bandVal.forEach((lv,b)=>{const v=Math.exp(-S.tau*lv),x=X(lv);
+    h+=`<line class="bandl" x1="${x}" x2="${x}" y1="${Y(0)}" y2="${Y(1)}"/>`;
+    h+=`<circle cx="${x}" cy="${Y(v)}" r="4.5" fill="${T.bg}" stroke="${T.accent}" stroke-width="2" data-tip="${L(BAND[b]+" band",BAND[b]+"频带")}, <i class='mv'>λ</i> = ${lv.toFixed(3)}<br>${L("retained","保留")} <i class='mv'>e</i><sup>−<i class='mv'>τλ</i></sup> = ${v.toFixed(3)}"/>`;
+    h+=`<text class="val halo" x="${x+(b===0?7:-7)}" y="${Y(v)-8}" text-anchor="${b===0?"start":"end"}">${v.toFixed(2)}</text>`;
+    h+=`<text class="tkb" x="${x}" y="${Y(0)+(b===1?41:28)}" text-anchor="middle">${BAND[b]}</text>`;});
+  h+=`<text class="tk" x="${Wd-mr}" y="${Hd-3}" text-anchor="end">λ</text>`;
+  svg.innerHTML=h;
+}
+let simCache=null;
+function simData(){if(simCache)return simCache;const out=[];for(let k=0;k<=120;k++){const lt=-2+4*k/120,t=Math.pow(10,lt);const a=lift(t,0);out.push([lt,cos(a,lift(t,1)),cos(a,lift(t,4)),cos(a,lift(t,8))]);}return simCache=out;}
+function simColor(k){return [T.h2,T.h1,T.muted][k];}
+function renderSim(){
+  const svg=$("#simc"),Wd=380,Hd=250,ml=32,mr=10,mt=22,mb=34;const SIMN=X_().simn,SCN=X_().scale;
+  const X=lt=>ml+(lt+2)/4*(Wd-ml-mr),Y=v=>mt+(1-v)*(Hd-mt-mb);const D=simData();let h="";
+  [0,.5,1].forEach(v=>h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tk" x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`);
+  [-2,-1,0,1,2].forEach(lt=>h+=`<text class="tk" x="${X(lt)}" y="${Y(0)+14}" text-anchor="middle">${["0.01","0.1","1","10","100"][lt+2]}</text>`);
+  h+=`<text class="tk" x="${Wd-mr}" y="${Hd-3}" text-anchor="end"><tspan class="mv">τ</tspan>${L(" (log scale)","（对数坐标）")}</text>`;
+  G.tauB.forEach((t,s)=>{const x=X(Math.log10(t));h+=`<line x1="${x}" x2="${x}" y1="${mt}" y2="${Y(0)}" stroke="${T.line2}" stroke-dasharray="3 3"/><rect x="${x-4}" y="${mt-8}" width="8" height="3" rx="1" fill="${T[SC[s]]}"/><text class="tk" x="${x+6}" y="${mt-4}">${SCN[s]}</text>`;});
+  for(let k=0;k<3;k++)h+=`<path d="M${D.map(r=>X(r[0]).toFixed(1)+","+Y(r[k+1]).toFixed(1)).join(" L")}" fill="none" stroke="${simColor(k)}" stroke-width="2"/>`;
+  $("#simLeg").innerHTML=SIMN.map((n,k)=>`<span><span class="sw" style="background:${simColor(k)}"></span>${n}</span>`).join("");
+  const cx=X(Math.log10(S.tau));h+=`<line x1="${cx}" x2="${cx}" y1="${mt}" y2="${Y(0)}" stroke="${T.accent}" stroke-width="1.5"/>`;
+  const a=lift(S.tau,0);[cos(a,lift(S.tau,1)),cos(a,lift(S.tau,4)),cos(a,lift(S.tau,8))].forEach((v,k)=>h+=`<circle cx="${cx}" cy="${Y(v)}" r="4" fill="${simColor(k)}" stroke="${T.bg}" stroke-width="2"/>`);
+  h+=`<g class="xh"></g><rect data-xhair="1" x="${ml}" y="${mt}" width="${Wd-ml-mr}" height="${Y(0)-mt}" fill="transparent"/>`;
+  svg.innerHTML=h;
+  const ov=svg.querySelector("[data-xhair]"),xh=svg.querySelector(".xh");
+  ov.addEventListener("pointermove",e=>{const p=svgPt(svg,e);const lt=clamp((p.x-ml)/(Wd-ml-mr)*4-2,-2,2);const r=D[Math.round((lt+2)/4*120)];
+    xh.innerHTML=`<line x1="${X(r[0])}" x2="${X(r[0])}" y1="${mt}" y2="${Y(0)}" stroke="${T.ink2}" stroke-opacity=".5"/>`+[1,2,3].map(k=>`<circle cx="${X(r[0])}" cy="${Y(r[k])}" r="3.5" fill="${simColor(k-1)}"/>`).join("");
+    showTip(`<i class="mv">τ</i> = <span class="mono">${Math.pow(10,r[0]).toPrecision(3)}</span><br>`+SIMN.map((n,k)=>`<span class="sw" style="background:${simColor(k)}"></span>${n}: <span class="mono">${r[k+1].toFixed(3)}</span>`).join("<br>"),e.clientX,e.clientY);});
+  ov.addEventListener("pointerleave",()=>{xh.innerHTML="";tip.hidden=true;});
+}
+function renderStep2(){
+  const z=lift(S.tau,S.src);paintHeat(g2,z,S.src);
+  const sib=(S.src&~3)|((S.src+1)&3);
+  const a=z[S.src].toFixed(3),b=fmtS(z[sib]),c=fmtS(z[(S.src+8)%16]);
+  $("#g2cap").innerHTML=L(` The source ${Q(W(S.src))} keeps <span class="num">${a}</span>; a same-category word holds <span class="num">${b}</span> and a different-domain word <span class="num">${c}</span>.`,
+    `热源${Q(W(S.src))}保留 <span class="num">${a}</span>，同类别的词为 <span class="num">${b}</span>，不同领域的词为 <span class="num">${c}</span>。`);
+  const Ls=[...Array(N)].map((_,i)=>lift(S.tau,i));const nn=Ls.map(nrm);
+  matrix($("#cmat"),(i,j)=>dot(Ls[i],Ls[j])/(nn[i]*nn[j]),(i,j)=>`<b>${W(i)} · ${W(j)}</b>　<i class='mv'>d</i> = ${dU(i,j)}<br>cos = <span class='mono'>${(dot(Ls[i],Ls[j])/(nn[i]*nn[j])).toFixed(3)}</span>`);
+  renderFilt();renderSim();
+  $("#tauRead").innerHTML='<i class="mv">τ</i> = '+S.tau.toPrecision(3);
+  document.querySelectorAll("#presets button").forEach((b,s)=>b.setAttribute("aria-pressed",Math.abs(Math.log(S.tau/G.tauB[s]))<0.02?"true":"false"));
+}
+function setTau(t){S.tau=t;$("#tau").value=tau2sl(t);renderStep2();}
+
+/* ---------- section 3 ---------- */
+function renderSeq(){
+  const el=$("#seq");let h="";
+  S.seq.forEach(([w,d],k)=>{h+=`<button class="chip" type="button" data-k="${k}" aria-pressed="${k===S.sel}">${W(w)}<small><i class="mv">k</i> = ${k+1}</small></button>`;
+    if(k<S.seq.length-1)h+=`<span class="gap">${d.toFixed(1)}s<span class="bar" style="width:${5+Math.min(d,DCLIP)*1.6}px"></span></span>`;});
+  el.innerHTML=h;
+  el.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{S.sel=+b.dataset.k;$("#dk").value=S.seq[S.sel][1];renderStep3();}));
+}
+function renderStep3(){
+  renderSeq();
+  const [v,d]=S.seq[S.sel];const s=S.scale;const tb=G.tauB[s],tt=modTau(s,d);
+  const zb=lift(tb,v),zm=lift(tt,v);const dz=zm.map((x,i)=>x-zb[i]);const SCN=X_().scale;
+  $("#dkRead").textContent=d.toFixed(1)+" s";
+  $("#dk").disabled=S.sel===S.seq.length-1;
+  $("#barT").innerHTML=L(`Embedding of ${Q(W(v))} at position <i class='mv'>k</i> = ${S.sel+1}, ${SCN[s]} scale.`,`位置 <i class='mv'>k</i> = ${S.sel+1} 的${Q(W(v))}在${SCN[s]}尺度下的嵌入。`);
+  $("#stats").innerHTML=[[L("base <i class='mv'>τ</i><sub>s</sub>","基准 <i class='mv'>τ</i><sub>s</sub>"),tb.toFixed(3)],[L("modulated <i class='mv'>τ̃</i><sub>k</sub>","调制后 <i class='mv'>τ̃</i><sub>k</sub>"),tt.toFixed(3)],["Δ<i class='mv'>τ</i> / <i class='mv'>τ</i><sub>s</sub>",(GAMMA*phi(d)).toFixed(3)],["cos(<i class='mv'>z</i><sub>base</sub>, <i class='mv'>z</i><sub>mod</sub>)",cos(zb,zm).toFixed(4)]]
+    .map(([k,val])=>`<div class="stat"><div class="k">${k}</div><div class="v">${val}</div></div>`).join("");
+  { const svg=$("#bars"),Wd=560,Hd=250,ml=40,mr=6,mt=22,mb=L(74,44);const lo=-4,hi=0;
+    const Y=x=>{const l=Math.log10(Math.max(x,1e-4));return mt+(hi-l)/(hi-lo)*(Hd-mt-mb);};const bw=(Wd-ml-mr)/N;const y0=Y(1e-4);let h="";
+    for(let c=0;c<4;c++){const x1=ml+c*4*bw;if(c%2===0)h+=`<rect x="${x1}" y="${mt-18}" width="${4*bw}" height="${y0-mt+18}" fill="${T.tint}"/>`;h+=`<text class="tk" x="${x1+2*bw}" y="${mt-7}" text-anchor="middle">${X_().cats[c]}</text>`;}
+    [0,-1,-2,-3,-4].forEach(l=>h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(Math.pow(10,l))}" y2="${Y(Math.pow(10,l))}"/><text class="tk" x="${ml-5}" y="${Y(Math.pow(10,l))+3.5}" text-anchor="end">${["1","0.1","0.01","1e-3","1e-4"][-l]}</text>`);
+    for(let j=0;j<N;j++){const x=ml+j*bw+3,w=bw-6;const yb=Y(zb[j]),ym=Y(zm[j]);
+      h+=`<rect x="${x}" y="${ym}" width="${w}" height="${Math.max(0,y0-ym)}" fill="${ramp(0.35+0.65*clamp((Math.log10(Math.max(zm[j],1e-4))+4)/4))}" data-tip="<b>${W(j)}</b><br><i class='mv'>z</i><sub>base</sub> = <span class='mono'>${fmtS(zb[j])}</span><br><i class='mv'>z</i><sub>mod</sub> = <span class='mono'>${fmtS(zm[j])}</span>"/>`;
+      h+=`<rect x="${x-1.5}" y="${yb}" width="${w+3}" height="${Math.max(0,y0-yb)}" fill="none" stroke="${T.ink2}" stroke-width="1.1" stroke-dasharray="3 2" pointer-events="none"/>`;
+      const lx=x+w/2,ly=y0+10;h+=`<text class="tkb" x="${lx}" y="${ly}" text-anchor="end" transform="rotate(-45 ${lx} ${ly})" ${j===v?`style="fill:${T.accent};font-weight:700"`:""}>${W(j)}</text>`;}
+    svg.innerHTML=h;}
+  { const svg=$("#resb"),Wd=560,Hd=170,ml=40,mr=6,mt=12,mb=22;const mx=Math.max(...dz.map(Math.abs),1e-9);const sq=x=>Math.sign(x)*Math.sqrt(Math.abs(x)/mx);
+    const Y=x=>mt+(1-sq(x))/2*(Hd-mt-mb);const bw=(Wd-ml-mr)/N;const y0=Y(0);let h="";
+    [mx,mx/4,0,-mx/4,-mx].forEach(t=>h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(t)}" y2="${Y(t)}"/><text class="tk" x="${ml-5}" y="${Y(t)+3.5}" text-anchor="end">${t===0?"0":fmtS(t)}</text>`);
+    h+=`<line class="axis" x1="${ml}" x2="${Wd-mr}" y1="${y0}" y2="${y0}"/>`;
+    for(let j=0;j<N;j++){const x=ml+j*bw+3,w=bw-6,y=Y(dz[j]);const pos=dz[j]>=0;
+      h+=`<rect x="${x}" y="${Math.min(y,y0)}" width="${w}" height="${Math.max(0.5,Math.abs(y-y0))}" rx="2" fill="${pos?T.h2:T.cool}" data-tip="<b>${W(j)}</b>　<i class='mv'>d</i> = ${dU(v,j)}<br>Δ<i class='mv'>z</i> = <span class='mono'>${fmtS(dz[j])}</span>"/>`;}
+    h+=`<text class="tk" x="${ml+4}" y="${Hd-6}">Δ<tspan class="mv">z</tspan>${L(" (signed square-root scale)","（带符号平方根刻度）")}</text>`;
+    h+=`<text class="tk" x="${Wd-mr}" y="${Hd-6}" text-anchor="end">‖Δ<tspan class="mv">z</tspan>‖ = ${nrm(dz).toFixed(4)}</text>`;
+    svg.innerHTML=h;}
+  renderNorm(d);renderBandp();renderEnergy(v,d);
+}
+function renderNorm(dsel){
+  const svg=$("#normc"),Wd=380,Hd=240,ml=40,mr=46,mt=14,mb=32;const v=0;const SCN=X_().scale;
+  const series=[0,1,2].map(s=>{const zb=lift(G.tauB[s],v);const a=[];for(let k=0;k<=80;k++){const d=20*k/80;const zm=lift(modTau(s,d),v);let q=0;for(let j=0;j<N;j++)q+=(zm[j]-zb[j])**2;a.push([d,Math.sqrt(q)]);}return a;});
+  const ymax=Math.max(...series.flat().map(p=>p[1]))*1.08||1;const X=d=>ml+d/20*(Wd-ml-mr),Y=y=>mt+(1-y/ymax)*(Hd-mt-mb);let h="";
+  const step=ymax>0.6?0.2:ymax>0.3?0.1:0.05;
+  for(let y=0;y<=ymax+1e-9;y+=step)h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(y)}" y2="${Y(y)}"/><text class="tk" x="${ml-5}" y="${Y(y)+3.5}" text-anchor="end">${y.toFixed(2)}</text>`;
+  [0,5,10,15,20].forEach(d=>h+=`<text class="tk" x="${X(d)}" y="${Y(0)+14}" text-anchor="middle">${d}</text>`);
+  h+=`<text class="tk" x="${Wd-mr}" y="${Hd-3}" text-anchor="end">${L("latency ","间隔 ")}<tspan class="mv">δ</tspan>${L(" (s)","（秒）")}</text>`;
+  const x90=X(D90);h+=`<line x1="${x90}" x2="${x90}" y1="${mt}" y2="${Y(0)}" stroke="${T.line2}" stroke-dasharray="3 3"/><text class="tk" x="${x90+4}" y="${mt+9}"><tspan class="mv">δ</tspan>₉₀</text>`;
+  const ends=series.map((a,s)=>({s,y:Y(a[a.length-1][1])})).sort((p,q)=>p.y-q.y);
+  for(let i=1;i<3;i++)if(ends[i].y-ends[i-1].y<12)ends[i].y=ends[i-1].y+12;
+  series.forEach((a,s)=>h+=`<path d="M${a.map(p=>X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join(" L")}" fill="none" stroke="${T[SC[s]]}" stroke-width="2"/>`);
+  ends.forEach(e=>h+=`<text class="tkb" x="${X(20)+5}" y="${e.y+4}">${SCN[e.s]}</text>`);
+  $("#nmLeg").innerHTML=SCN.map((n,s)=>`<span><span class="sw" style="background:var(--${SC[s]})"></span>${n}</span>`).join("")+`<span>${L("dashed: <i class='mv'>δ</i>₉₀; red: selected <i class='mv'>δ</i><sub>k</sub>","虚线：<i class='mv'>δ</i>₉₀；红线：所选 <i class='mv'>δ</i><sub>k</sub>")}</span>`;
+  const x=X(Math.min(dsel,20));h+=`<line x1="${x}" x2="${x}" y1="${mt}" y2="${Y(0)}" stroke="${T.accent}" stroke-width="1.5"/>`;
+  series.forEach((a,s)=>{const p=a[Math.round(Math.min(dsel,20)/20*80)];h+=`<circle cx="${x}" cy="${Y(p[1])}" r="4" fill="${T[SC[s]]}" stroke="${T.bg}" stroke-width="2" data-tip="${SCN[s]}: ‖Δ<i class='mv'>z</i>‖ = ${p[1].toFixed(4)}"/>`;});
+  svg.innerHTML=h;
+}
+function renderBandp(){
+  const svg=$("#bandp"),Wd=380,Hd=240,ml=32,mr=10,mt=12,mb=56;const xmax=Math.max(1.5,G.lmax*1.12);const BAND=X_().band,SCN=X_().scale;
+  const X=l=>ml+l/xmax*(Wd-ml-mr),Y=v=>mt+(1-v)*(Hd-mt-mb);let h="";
+  [0,.5,1].forEach(v=>h+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tk" x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`);
+  for(let k=0;k<=Math.floor(xmax/0.5);k++){const l=k*0.5;h+=`<text class="tk" x="${X(l)}" y="${Y(0)+14}" text-anchor="middle">${l.toFixed(1)}</text>`;}
+  G.bandVal.forEach((lv,b)=>h+=`<line class="bandl" x1="${X(lv)}" x2="${X(lv)}" y1="${Y(0)}" y2="${Y(1)}"/><text class="tkb" x="${X(lv)}" y="${Y(0)+(b===1?41:28)}" text-anchor="middle">${BAND[b]}</text>`);
+  G.tauB.forEach((t,s)=>{const pk=1/(t*Math.E);const pts=[];for(let i=0;i<=140;i++){const l=xmax*i/140;pts.push([X(l),Y(l*Math.exp(-t*l)/pk)]);}
+    h+=`<path d="M${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" L")}" fill="none" stroke="${T[SC[s]]}" stroke-width="2"/>`;
+    const ls=1/t;if(ls<=xmax)h+=`<circle cx="${X(ls)}" cy="${Y(1)}" r="3.5" fill="${T[SC[s]]}" data-tip="${SCN[s]}, <i class='mv'>λ</i>* = ${ls.toFixed(2)}"/>`;});
+  h+=`<text class="tk" x="${Wd-mr}" y="${Hd-3}" text-anchor="end">λ</text>`;
+  svg.innerHTML=h;
+  $("#bpLeg").innerHTML=G.tauB.map((t,s)=>{const ls=1/t;return `<span><span class="sw" style="background:var(--${SC[s]})"></span>${L(`${SCN[s]}, peak <i class='mv'>λ</i>* = ${ls.toFixed(2)}${ls>xmax?" (off chart)":""}`,`${SCN[s]}，峰值 <i class='mv'>λ</i>* = ${ls.toFixed(2)}${ls>xmax?"（超出图示范围）":""}`)}</span>`;}).join("");
+}
+function renderEnergy(v,d){
+  const svg=$("#energy"),Wd=560,ml=52,mr=6,bh=24,gap=12,mt=4;let h="";const tv=[.3,.62,.95];const BAND=X_().band,SCN=X_().scale;
+  const bandName=b=>L(BAND[b]+" band",BAND[b]+"频带");
+  for(let s=0;s<3;s++){const tb=G.tauB[s],tt=modTau(s,d);const E=[0,0,0];
+    for(let m=1;m<N;m++){const c=(Math.exp(-tt*G.vals[m])-Math.exp(-tb*G.vals[m]))*G.U[v][m];E[bandOf(m)]+=c*c;}
+    const tot=E[0]+E[1]+E[2]||1;let x=ml;const y=mt+s*(bh+gap);
+    h+=`<rect x="2" y="${y+bh/2-4}" width="8" height="8" rx="2" fill="${T[SC[s]]}"/><text class="tkb" x="14" y="${y+bh/2+4}">${SCN[s]}</text>`;
+    E.forEach((e,b)=>{const w=(Wd-ml-mr)*e/tot;const r=rampRGB(tv[b]);if(w>0.3){
+      h+=`<rect x="${x}" y="${y}" width="${Math.max(0,w-2)}" height="${bh}" rx="3" fill="${css(r)}" data-tip="${SCN[s]} · ${bandName(b)}<br>${L("share of energy","能量占比")}: <span class='mono'>${(100*e/tot).toFixed(1)}%</span>"/>`;
+      if(w>78)h+=`<text x="${x+7}" y="${y+bh/2+4}" style="font-size:11.5px;font-family:var(--f-fig)" fill="${textOn(r)}" pointer-events="none">${BAND[b]} ${(100*e/tot).toFixed(0)}%</text>`;}
+      x+=w;});}
+  const yl=mt+3*(bh+gap)+4;h+=BAND.map((b,i)=>`<rect x="${ml+i*100}" y="${yl}" width="9" height="9" rx="2" fill="${ramp(tv[i])}"/><text class="tkb" x="${ml+i*100+14}" y="${yl+8.5}">${bandName(i)}</text>`).join("");
+  svg.innerHTML=h;
+}
+
+/* ---------- regime figure (Figure 8) ---------- */
+function renderRegime(){
+  const svg=$("#regime"),Wd=560,Hd=168,ml=58,mr=12,top=26,rowH=30,axY=top+3*rowH+8;
+  const lo=-1.5,hi=2;const X=t=>ml+(clamp(Math.log10(t),lo,hi)-lo)/(hi-lo)*(Wd-ml-mr);
+  const [lD,lC,lI]=G.bandVal;const bI=1/lI,bC=1/lC,bD=1/lD;
+  const SCN=X_().scale;
+  const zones=[[Math.pow(10,lo),bI,L("word level","词级"),.95],[bI,bC,L("category level","类别级"),.62],[bC,bD,L("domain level","领域级"),.3],[bD,Math.pow(10,hi),L("uniform","趋于均匀"),-1]];
+  let h="";
+  zones.forEach(([a,b,name,tv])=>{const x0=X(a),x1=X(b);
+    h+=`<rect x="${x0}" y="${top-18}" width="${Math.max(0,x1-x0)}" height="${axY-top+18}" fill="${tv<0?T.tint:ramp(tv)}" fill-opacity="${tv<0?1:.22}"/>`;
+    h+=`<text class="tkb" x="${(x0+x1)/2}" y="${top-5}" text-anchor="middle">${name}</text>`;});
+  [bI,bC,bD].forEach(b=>{h+=`<line x1="${X(b)}" x2="${X(b)}" y1="${top-18}" y2="${axY}" stroke="${T.line2}" stroke-dasharray="3 3"/>`;});
+  h+=`<line class="axis" x1="${ml}" x2="${Wd-mr}" y1="${axY}" y2="${axY}"/>`;
+  [0.1,1,10,100].forEach(t=>h+=`<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${axY}" y2="${axY+4}"/><text class="tk" x="${X(t)}" y="${axY+16}" text-anchor="middle">${t}</text>`);
+  h+=`<text class="tk" x="${Wd-mr}" y="${axY+30}" text-anchor="end"><tspan class="mv">τ</tspan>${L(" (log scale)","（对数坐标）")}</text>`;
+  const win=[[0,bI],[bI,bC],[bC,bD]];const fx=1+GAMMA*phi(DCLIP);const ok=[];
+  for(let s=0;s<3;s++){const y=top+s*rowH+rowH/2;const t0=G.tauB[s],t1=R_RATIO*t0,t2=fx*t0;
+    ok.push(t0>=win[s][0]&&t1<=win[s][1]);
+    h+=`<rect x="2" y="${y-4}" width="8" height="8" rx="2" fill="${T[SC[s]]}"/><text class="tkb" x="14" y="${y+4}">${SCN[s]}</text>`;
+    h+=`<line x1="${X(t1)}" x2="${X(t2)}" y1="${y}" y2="${y}" stroke="${T[SC[s]]}" stroke-width="2" stroke-dasharray="3 3"/>`;
+    h+=`<rect x="${X(t0)}" y="${y-4}" width="${X(t1)-X(t0)}" height="8" rx="4" fill="${T[SC[s]]}" data-tip="${SCN[s]}: <i class='mv'>τ</i><sub>s</sub> = ${t0.toFixed(3)} → 3<i class='mv'>τ</i><sub>s</sub> = ${t1.toFixed(3)}<br>${L("largest shift in the example","示例中的最大偏移")}: ${t2.toFixed(3)}"/>`;
+    h+=`<circle cx="${X(t0)}" cy="${y}" r="5" fill="${T.bg}" stroke="${T[SC[s]]}" stroke-width="2"/>`;}
+  svg.innerHTML=h;
+  const names=X_().scale;const bad=names.filter((n,s)=>!ok[s]);
+  { const dmax=(R_RATIO-1)*G.tauB[0],inv=1/(lI-lC),okm=dmax<inv;
+    $("#mgTxt").innerHTML=okm?` The micro scale can also be checked against the gap directly: its largest shift in <i class='mv'>τ</i> is ${dmax.toFixed(2)}, well below ${inv.toFixed(2)}, the inverse of the gap between the category and word bands. The paper's appendix carries out the same check.`
+      :` For the micro scale, the largest shift in <i class='mv'>τ</i> is ${dmax.toFixed(2)}, which at this <i class='mv'>ρ</i> exceeds ${inv.toFixed(2)}, the inverse of the gap between the category and word bands.`;
+    $("#mgTxtZ").innerHTML=okm?`微观尺度还可以直接与谱间隔比较：它的 <i class='mv'>τ</i> 最大偏移为 ${dmax.toFixed(2)}，远小于类别频带与词级频带之间间隔的倒数 ${inv.toFixed(2)}。论文附录给出了同样的验证。`
+      :`对于微观尺度，<i class='mv'>τ</i> 的最大偏移为 ${dmax.toFixed(2)}，在当前 <i class='mv'>ρ</i> 下超过了类别频带与词级频带之间间隔的倒数 ${inv.toFixed(2)}。`; }
+  $("#regTxt").innerHTML=bad.length?L(` At <i class='mv'>ρ</i> = ${S.rho.toFixed(1)}, the ${bad.join(" and ")} range extends past its region.`,`当 <i class='mv'>ρ</i> = ${S.rho.toFixed(1)} 时，${bad.join("与")}尺度的范围超出了所在区域。`)
+    :L(` At <i class='mv'>ρ</i> = ${S.rho.toFixed(1)}, all three ranges stay inside their regions.`,`当 <i class='mv'>ρ</i> = ${S.rho.toFixed(1)} 时，三个尺度的范围都位于各自区域内。`);
+}
+
+/* ---------- hero ---------- */
+let gh,heroRAF=null,heroVisible=true;
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function heroFrame(ts){const P=9000;const ph=(ts%P)/P;const e=0.5-0.5*Math.cos(ph*2*Math.PI);const t=Math.pow(10,-1.6+e*2.9);
+  paintHeat(gh,lift(t,14),14);$("#heroTau").innerHTML='<i class="mv">τ</i> = '+t.toPrecision(3);if(heroVisible)heroRAF=requestAnimationFrame(heroFrame);else heroRAF=null;}
+function heroStatic(){const t=G.tauB[1];paintHeat(gh,lift(t,14),14);$("#heroTau").innerHTML='<i class="mv">τ</i> = '+t.toPrecision(3)+L(" (meso)","（中观）");}
+
+/* ---------- MathJax: typeset only the visible language ---------- */
+const typeset=()=>{if(!(window.MathJax&&MathJax.typesetPromise))return;
+  const els=[...document.querySelectorAll(".math, ."+LANG)].filter(e=>!e.dataset.mj);if(!els.length)return;
+  els.forEach(e=>e.dataset.mj="1");MathJax.typesetPromise(els).catch(()=>{});};
+window.__tlTypeset=typeset;
+
+/* ---------- wiring ---------- */
+function buildButtons(){
+  const SCN=X_().scale;
+  $("#presets").innerHTML=SCN.map((n,k)=>`<button type="button" data-s="${k}"><span class="sw" style="background:var(--${SC[k]})"></span>${n}</button>`).join("");
+  $("#presets").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{stopPlay();setTau(G.tauB[+b.dataset.s]);}));
+  $("#scaleTabs").innerHTML=SCN.map((n,k)=>`<button type="button" data-s="${k}" aria-pressed="${k===S.scale}"><span class="sw" style="background:var(--${SC[k]})"></span>${n}</button>`).join("");
+  $("#scaleTabs").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{S.scale=+b.dataset.s;$("#scaleTabs").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));renderStep3();}));
+  $("#play").textContent=playing?L("Pause","暂停"):L("Play","播放");
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===LANG?"true":"false"));
+}
+function buildGraphs(){
+  g1=makeGraph($("#g1"),i=>{g1sel=i;renderG1();});
+  g2=makeGraph($("#g2"),i=>{S.src=i;renderStep2();});
+  gh=makeGraph($("#heroG"),null);
+}
+function renderAll(){readTokens();renderStep1();renderStep2();renderRegime();renderStep3();if(reduce||!heroRAF)heroStatic();}
+function setLang(l){
+  if(l===LANG)return;LANG=l;
+  const root=document.documentElement;root.setAttribute("data-lang",l);root.lang=l==="zh"?"zh-CN":"en";
+  try{localStorage.setItem("trajlift-lang",l);}catch(e){}
+  buildButtons();buildGraphs();renderAll();typeset();
+}
+let playing=false,playStart=0,playRAF=0;
+function startPlay(){playing=true;$("#play").textContent=L("Pause","暂停");$("#play").setAttribute("aria-pressed","true");
+  const v0=+$("#tau").value;const startV=v0>=995?0:v0;playStart=performance.now()-startV/1000*7000;
+  const f=ts=>{if(!playing)return;const v=Math.min(1000,(ts-playStart)/7000*1000);S.tau=sl2tau(v);$("#tau").value=v;renderStep2();if(v<1000)playRAF=requestAnimationFrame(f);else stopPlay();};playRAF=requestAnimationFrame(f);}
+function stopPlay(){if(!playing)return;playing=false;cancelAnimationFrame(playRAF);$("#play").textContent=L("Play","播放");$("#play").setAttribute("aria-pressed","false");}
+function init(){
+  readTokens();compute();
+  buildGraphs();
+  S.tau=G.tauB[1];$("#tau").value=tau2sl(S.tau);
+  buildButtons();
+  document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.l)));
+  $("#tau").addEventListener("input",e=>{stopPlay();S.tau=sl2tau(+e.target.value);renderStep2();});
+  $("#rho").addEventListener("input",e=>{const r=S.tau/G.tauB[1];S.rho=+e.target.value;compute();simCache=null;S.tau=clamp(r*G.tauB[1],0.01,50);$("#tau").value=tau2sl(S.tau);renderAll();});
+  $("#dk").addEventListener("input",e=>{S.seq[S.sel][1]=+e.target.value;renderStep3();});
+  $("#play").addEventListener("click",()=>{playing?stopPlay():startPlay();});
+  renderAll();typeset();
+  if(!reduce){
+    const io=new IntersectionObserver(es=>{heroVisible=es[0].isIntersecting;if(heroVisible&&!heroRAF)heroRAF=requestAnimationFrame(heroFrame);});
+    io.observe($("#heroG"));heroRAF=requestAnimationFrame(heroFrame);
+  } else heroStatic();
+  const mq=matchMedia("(prefers-color-scheme: dark)");mq.addEventListener&&mq.addEventListener("change",renderAll);
+  new MutationObserver(m=>{if(m.some(r=>r.attributeName==="data-theme"))renderAll();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+}
+init();
+})();
+</script>
+</body>
+</html>
